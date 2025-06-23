@@ -17,9 +17,19 @@ setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-is
 snp_db <- fread("data/original_db/final_dataset_cna.csv")[, -1]
 snp_meta <- read_excel("data/original_db/Tabella pz TP53 (5).xlsx", sheet = "SNP")
 
+# ---- data manipulation of overall CNA dataset ----
+snp_db <- snp_db %>% mutate(abs_CN_diff = abs(weighted_mean_CN - 2))
+
+cut_offs_cols <- map2_dfc(.x = names(cut_offs), 
+                          .y = as.list(cut_offs), 
+                          .f = ~ {tibble(!!sym(.x) := if_else(snp_db$abs_CN_diff > .y, 1, 0))})
+
+snp_db <- cbind(snp_db, cut_offs_cols)
+snp_db <- snp_db %>% relocate(abs_CN_diff, class_10, class_20, class_50, class_80, .after = weighted_mean_CN)
+write_tsv(snp_db, paste0("data/cna_class_df.txt"))
 
 
-# ---- data manipulation ----
+# ---- data manipulation of filtered CNA dataset for 32 EMN02 pts ----
 #homogenization of SNP ID
 snp_meta <- snp_meta %>% mutate(N_SNP = str_replace(SNP_numero, " ", "_"))
 SNPs <- na.omit(snp_meta$N_SNP)
@@ -43,3 +53,4 @@ cut_offs_cols <- map2_dfc(.x = names(cut_offs),
 wb_snp_df <- cbind(wb_snp_tmp_df, cut_offs_cols)
 
 write_tsv(wb_snp_df, paste0("data/wb_snp_df.txt"))
+
