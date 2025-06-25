@@ -2,7 +2,7 @@
 
 # file: utils.R
 # description: functions
-# last update: 27-05-2025
+# last update: 25-06-2025
 
 
 aggregateIsoforms <- function(df){
@@ -18,12 +18,28 @@ aggregateIsoforms <- function(df){
 }
 
 
+applyCutOff <- function(arm, cut_off){
+  return(ifelse(arm - 2 < -cut_off, "del", 
+                ifelse(arm - 2 > cut_off, "amp", "normal")))
+}
+
+
 binaryConversion <- function(df, th_df, th_col = c(1, 2), mmrf_pts, transcripts){
   df <- as.data.frame(t(sapply(1:nrow(df), function(x) ifelse(df[x, ] > th_df[x, th_col], 1, 0))))
   colnames(df) <- mmrf_pts
   df$transcript <- transcripts
   return(df)
 }
+
+
+classifyArms <- function(df, cut_off, chr_arms){
+  alt_df <- list.cbind(lapply(c(6:44), function(x) applyCutOff(df[, ..x], cut_off)))
+  colnames(alt_df) <-  paste0(chr_arms, "_alt")
+  class_df <- cbind(df, alt_df) %>%
+    select(N_SNP, SNP, MPC, DNA, GITC, starts_with(chr_arms))
+  return(class_df)
+}
+
 
 createQQPlot <- function(df, transcript){
   return(df %>%
