@@ -137,7 +137,7 @@ mmrf_cpm_per_pt <- mmrf_cpm_per_pt_tmp %>%
 write_tsv(mmrf_cpm_per_pt, "mmrf_cpm_per_pt.txt")
 
 mmrf_lcpm_per_pt_tmp <- filterMMRF(mmrf_lcpm, mmrf_cln) 
-mmrf_lcpm_per_pt <- mmrf_lcpm_per_pt_tmp%>%
+mmrf_lcpm_per_pt <- mmrf_lcpm_per_pt_tmp %>%
   select(order(colnames(mmrf_lcpm_per_pt_tmp))) %>%
   mutate(transcript = mmrf_tpm$Transcript, .before = MMRF_1021)
 write_tsv(mmrf_lcpm_per_pt, "mmrf_lcpm_per_pt.txt")
@@ -156,3 +156,15 @@ mmrf_cln_per_pt <- mmrf_cln %>%
   arrange(PUBLIC_ID)
 
 write_tsv(mmrf_cln_per_pt, "mmrf_cln_per_pt.txt")
+
+
+# update: harmonizing every data: pts with clinical, genomic and transcriptomic data: 659 pts
+mmrf_cln_per_pt <- fread("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/clinical_data/mmrf_cln_per_pt.txt")
+mmrf_cpm_per_pt <- fread("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/transcript_based/mmrf_cpm_per_pt.txt")
+mmrf_lcpm_per_pt <- fread("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/transcript_based/mmrf_lcpm_per_pt.txt")
+
+mmrf_cpm_per_pt <- mmrf_cpm_per_pt %>% select(transcript, matches(mmrf_cln_per_pt$PUBLIC_ID))
+write_tsv(mmrf_cpm_per_pt, "../transcript_based/mmrf_cpm_per_pt.txt")
+
+mmrf_lcpm_per_pt <- mmrf_lcpm_per_pt %>% select(transcript, matches(mmrf_cln_per_pt$PUBLIC_ID))
+write_tsv(mmrf_lcpm_per_pt, "../transcript_based/mmrf_lcpm_per_pt.txt")

@@ -7,6 +7,7 @@
 library(data.table)
 library(GenomicRanges)
 library(plyranges)
+library(rlist)
 library(tidyverse)
 
 source("C:/Users/Dell/Desktop/git_projects/UMA/UMA_lib/fun/Popeye2.R")
@@ -15,10 +16,6 @@ source("C:/Users/Dell/Desktop/git_projects/UMA/UMA_lib/fun/Popeye2.R")
 # working directories
 wd <- setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/genomic_based/")
 filePath <- "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/Bioinformatics Seràgnoli - IA22/"
-
-# 754 pts with clinical and transcriptomic data attached
-mmrf_cln_per_pt <- fread("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/clinical_data/mmrf_cln_per_pt.txt")
-mmrf_pts <- mmrf_cln_per_pt$PUBLIC_ID
 
 
 # ---- GATK genome copy number ----
@@ -32,17 +29,18 @@ chrarm_CN_df <- Popeye2(gene_CN_df, "hg38", removeXY = FALSE)
 chrarm_CN_df$ID <- str_remove(chrarm_CN_df$ID, "_1_BM_CD138pos")
 names(chrarm_CN_df)[names(chrarm_CN_df)=="ID"] <- "PUBLIC_ID"
 
-# filtering to keep only pts with clinical and transcriptomic data
-chrarm_CN_per_pt <- chrarm_CN_df %>%
-  filter(PUBLIC_ID %in% mmrf_pts)
-  
-write_tsv(chrarm_CN_df, "WGS_CN_per_chrarm.tsv")
-write_tsv(chrarm_CN_per_pt, "WGS_CN_per_chrarm_per_pt.tsv")
+# computing the weighted mean CN value: 659 unique pts
+weighted_CN_per_pt <- chrarm_CN_per_pt %>%
+  group_by(PUBLIC_ID, chr, chrarm) %>%
+  summarise(weighted_mean_CN = sum(CN * width) / sum(width), 
+            start = min(start), 
+            end = max(end), 
+            width = end - start,
+            probes = sum(Num_Probes)) %>%
+  select(PUBLIC_ID, chr, chrarm, start, end, width, probes, weighted_mean_CN)
+weighted_CN_per_pt$chrarm <- factor(weighted_CN_per_pt$chrarm, levels = unique(weighted_CN_per_pt$chrarm))
 
-
-# classifying at 10% cut-off
-tmp <- unlist(lapply(1:nrow(chrarm_CN_df), function(x) applyCutOff(chrarm_CN_df[x, 9], 0.1)))
-chrarm_CN_df_10 <- cbind(chrarm_CN_df, tmp)
+write_tsv(weighted_CN_per_pt, "WGS_weighted_CN_per_pt.tsv")
 
 
 # ---- Non-synonymous SNVs ----
@@ -59,22 +57,22 @@ tp53_dups <- tp53_nonsyn_snv_tmp_df[duplicated(tp53_nonsyn_snv_tmp_df$PUBLIC_ID)
   group_by(PUBLIC_ID, TP53_CHROM, HUGO_ID, ENSG_ID) %>%
   summarise(across(everything(), ~ paste(., collapse = "/")), .groups = 'drop')
 
-tp53_nonsyn_snv_df <- rbind(tp53_nonsyn_snv_tmp_df %>% filter(!PUBLIC_ID %in% tp53_dups$PUBLIC_ID), tp53_dups)
-tp53_nonsyn_snv_df$TP53_CHROM <- as.numeric(str_remove(tp53_nonsyn_snv_df$TP53_CHROM, "chr"))
-
-write_tsv(tp53_nonsyn_snv_df, "tp53_SNVs.tsv")
+NS_tp53_per_pt <- rbind(tp53_nonsyn_snv_tmp_df %>% filter(!PUBLIC_ID %in% tp53_dups$PUBLIC_ID), tp53_dups)
+NS_tp53_per_pt$TP53_CHROM <- as.numeric(str_remove(NS_tp53_per_pt$TP53_CHROM, "chr"))
+ 
+write_tsv(NS_tp53_per_pt, "NS_TP53_per_pt.tsv")
 
 
 # ---- Translocations ----
 chr_partners <- c("chr4", "chr6", "chr11", "chr16", "chr20")
 
 # FISH: 908 unique obs for 908 unique pts
-fish_df <- fread(paste0(filePath, "seqFISH/MMRF_CoMMpass_IA22_genome_tumor_only_mm_igtx_pairoscope.tsv")) %>%
+fish_per_pt <- fread(paste0(filePath, "seqFISH/MMRF_CoMMpass_IA22_genome_tumor_only_mm_igtx_pairoscope.tsv")) %>%
   filter(str_detect(SAMPLE, "1_BM_CD138pos")) %>%
   mutate(PUBLIC_ID = str_remove(SAMPLE, "_1_BM_CD138pos")) %>%
   select(PUBLIC_ID, ends_with("CALL"))
 
-write_tsv(fish_df, "canonical_t_IgH_FISH.tsv")
+write_tsv(fish_per_pt, "canonical_t_IgH_FISH_per_pt.tsv")
 
 # NGS: 1461 obs for 315 unique pts
 delly_df <- fread(paste0(filePath, "structural_event/MMRF_CoMMpass_IA22_genome_delly.tsv")) %>% 
@@ -91,32 +89,74 @@ manta_df <- fread(paste0(filePath, "structural_event/MMRF_CoMMpass_IA22_genome_m
          CHR2 = as.numeric(str_remove(CHR2, "chr"))) %>%
   select(PUBLIC_ID, CHROM, POS, CHR2, POS2 = ENDPOSSV)
 
-t_IgH_tmp_df <- full_join(delly_df, manta_df, by = c("PUBLIC_ID", "CHROM", "POS", "CHR2", "POS2"), relationship = "many-to-many") %>%
+t_IgH_tmp <- full_join(delly_df, manta_df, by = c("PUBLIC_ID", "CHROM", "POS", "CHR2", "POS2"), relationship = "many-to-many") %>%
   mutate(t_IgH = ifelse(CHROM > CHR2, paste0("t(",CHR2,";",CHROM,")"), paste0("t(",CHROM,";",CHR2,")")), .after = PUBLIC_ID)
 
 # arranging to check for duplicates
-is_IgH_chr <- t_IgH_tmp_df[["CHROM"]]!= "14"
-t_IgH_tmp_df[is_IgH_chr, c("CHROM", "CHR2")] <- t_IgH_tmp_df[is_IgH_chr, c("CHR2", "CHROM")] #swapping chromosomes
-t_IgH_tmp_df[is_IgH_chr, c("POS", "POS2")] <- t_IgH_tmp_df[is_IgH_chr, c("POS2", "POS")] #swapping positions
+is_IgH_chr <- t_IgH_tmp[["CHROM"]]!= "14"
+t_IgH_tmp[is_IgH_chr, c("CHROM", "CHR2")] <- t_IgH_tmp[is_IgH_chr, c("CHR2", "CHROM")] #swapping chromosomes
+t_IgH_tmp[is_IgH_chr, c("POS", "POS2")] <- t_IgH_tmp[is_IgH_chr, c("POS2", "POS")] #swapping positions
 
 # cleaning 
-t_IgH_tmp_df <- t_IgH_tmp_df %>%
+t_IgH_tmp <- t_IgH_tmp %>%
   filter(POS >= 105586437 & POS <= 106879844) %>% #only falling inside IgH
   distinct(PUBLIC_ID, t_IgH, CHROM, POS, CHR2, .keep_all = TRUE) #removing equal dups
 
-t_IgH_dups <- t_IgH_tmp_df[duplicated(t_IgH_tmp_df$PUBLIC_ID) | duplicated(t_IgH_tmp_df$PUBLIC_ID, fromLast = TRUE), ] %>%
+t_IgH_dups <- t_IgH_tmp[duplicated(t_IgH_tmp$PUBLIC_ID) | duplicated(t_IgH_tmp$PUBLIC_ID, fromLast = TRUE), ] %>%
   group_by(PUBLIC_ID) %>%
   summarise(across(everything(), ~ paste(., collapse = "/")), .groups = 'drop') 
 
 # binding
-t_IgH_df <- rbind(t_IgH_tmp_df %>% filter(!PUBLIC_ID %in% t_IgH_dups$PUBLIC_ID), t_IgH_dups) %>%
+t_IgH_per_pt <- rbind(t_IgH_tmp %>% filter(!PUBLIC_ID %in% t_IgH_dups$PUBLIC_ID), t_IgH_dups) %>%
   rename_with(~c("IGH_CHROM", "IGH_POS", "IGH_CHR2", "IGH_POS2"), c(3,4,5,6))
-write_tsv(t_IgH_df, "canonical_t_IgH_NGS.tsv")
+write_tsv(t_IgH_per_pt, "canonical_t_IgH_NGS_per_pt.tsv")
+
+
+# ---- Classification ----
+classifyArms <- function(df, cut_off, chr_arms){
+  alt_df <- list.cbind(lapply(c(2:46), function(x) applyCutOff(df[, ..x], cut_off)))
+  colnames(alt_df) <-  paste0(chr_arms, "_alt")
+  class_df <- cbind(df, alt_df) %>%
+    select(PUBLIC_ID, starts_with(chr_arms))
+  return(class_df)
+}
+
+# transposing weighted mean CN dataframe 
+weighted_CN_per_chrarm <- dcast(setDT(weighted_CN_per_pt), PUBLIC_ID ~ chrarm, value.var = "weighted_mean_CN")
+
+# applying different cut-offs
+chr_arms <- colnames(mmrf_genomic_per_pt)[43:87]
+
+weighted_CN_class_10 <-  classifyArms(weighted_CN_per_chrarm, 0.10, chr_arms) 
+weighted_CN_class_20 <-  classifyArms(weighted_CN_per_chrarm, 0.20, chr_arms) 
+weighted_CN_class_50 <-  classifyArms(weighted_CN_per_chrarm, 0.50, chr_arms) 
+weighted_CN_class_80 <-  classifyArms(weighted_CN_per_chrarm, 0.80, chr_arms) 
 
 
 # ---- Harmonization ----
-mmrf_genomic_tmp <- left_join(fish_df, t_IgH_df, by = "PUBLIC_ID") %>%
-  left_join(tp53_nonsyn_snv_df, by = "PUBLIC_ID") 
+# 754 pts with clinical and transcriptomic data attached
+mmrf_cln_per_pt <- fread("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/clinical_data/mmrf_cln_per_pt.txt")
+mmrf_cln_per_pt <- mmrf_cln_per_pt %>% filter(mmrf_cln_per_pt$PUBLIC_ID %in% weighted_CN_per_pt$PUBLIC_ID) #filtering out pts that do not have CN
 
-tmp <- left_join(mmrf_cln_per_pt, mmrf_genomic_tmp)
+# update
+write_tsv(mmrf_cln_per_pt, "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/clinical_data/mmrf_cln_per_pt.txt")
 
+# merging
+mergeGenomicData <- function(class_df, mmrf_cln_per_pt, fish_per_pt, t_IgH_per_pt, NS_tp53_per_pt){
+  return(left_join(mmrf_cln_per_pt, class_df, by = "PUBLIC_ID") %>%
+           left_join(fish_per_pt, by = "PUBLIC_ID") %>%
+           left_join(t_IgH_per_pt, by = "PUBLIC_ID") %>%
+           left_join(NS_tp53_per_pt, by = "PUBLIC_ID"))
+}
+
+mmrf_genomic_per_pt_class_10 <- mergeGenomicData(weighted_CN_class_10, mmrf_cln_per_pt, fish_per_pt, t_IgH_per_pt, NS_tp53_per_pt)
+write_tsv(mmrf_genomic_per_pt_class_10, "mmrf_genomic_per_pt_class_10.tsv")
+
+mmrf_genomic_per_pt_class_20 <- mergeGenomicData(weighted_CN_class_20, mmrf_cln_per_pt, fish_per_pt, t_IgH_per_pt, NS_tp53_per_pt)
+write_tsv(mmrf_genomic_per_pt_class_20, "mmrf_genomic_per_pt_class_20.tsv")
+
+mmrf_genomic_per_pt_class_50 <- mergeGenomicData(weighted_CN_class_50, mmrf_cln_per_pt, fish_per_pt, t_IgH_per_pt, NS_tp53_per_pt)
+write_tsv(mmrf_genomic_per_pt_class_50, "mmrf_genomic_per_pt_class_50.tsv")
+
+mmrf_genomic_per_pt_class_80 <- mergeGenomicData(weighted_CN_class_80, mmrf_cln_per_pt, fish_per_pt, t_IgH_per_pt, NS_tp53_per_pt)
+write_tsv(mmrf_genomic_per_pt_class_80, "mmrf_genomic_per_pt_class_80.tsv")
