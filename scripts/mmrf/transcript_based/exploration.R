@@ -94,6 +94,7 @@ mmrf_tp53_per_pt <- mmrf_tmp_tp53_per_pt %>%
          ALB, Ca, creatinine, HE, LDH, LDH_level, serum_M_prot, urine_24h_M_prot, serum_B2_mglob, serum_PCR, light_chain, light_chain_type, PLT, CD138_perc,
          ther_end = therendy_max, ther_name = thername, ther_cat = thercat, resp, resp_sh = respsh, resp_group, 
          PI, IMID, PI_IMID, mAb, asct, n_asct, maintenance, maint_lena, consolidation,
+         start_line_1, end_line_1, best_resp_dy_line_1, PFS_date, PFS_event, PFS_time, OS_date, OS_event, OS_time,
          ENST00000269305, ENST00000269305_exp, ENST00000420246, ENST00000420246_exp, ENST00000455263, ENST00000455263_exp, 
          ENST00000504937, ENST00000504937_exp, ENST00000510385, ENST00000510385_exp, ENST00000610292, ENST00000610292_exp)
 mmrf_tp53_per_pt$light_chain_type <- tolower(mmrf_tp53_per_pt$light_chain_type)
@@ -244,7 +245,3 @@ for(tp53_isoform in isoforms){
   assocplot(tbl, 
             main = unique(isoform_df$label), xlab = "Clinical response group", ylab = "Expression category", col = c("#2166ACFF", "#B2182BFF"))
 }
-
-
-
-
