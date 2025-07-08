@@ -33,22 +33,22 @@ cna_tmp_df <- cna_tmp_df %>% arrange(N_SNP)
 cna_df <- dcast(setDT(cna_tmp_df), ... ~ chrarm, value.var = "weighted_mean_CN") %>% arrange(N_SNP)
 
 # classify CN by arms - 10%
-cna_10_df <- classifyArms(cna_df, 0.1, chr_arms)
+cna_10_df <- classifySNPArms(cna_df, 0.10, chr_arms)
 write_tsv(cna_10_df, "data/cna/cna_class_10_df.txt")
 write.xlsx(cna_10_df, "data/cna/cna_class_10_df.xlsx")
 
 # classify CN by arms - 20%
-cna_20_df <- classifyArms(cna_df, 0.2, chr_arms)
+cna_20_df <- classifySNPArms(cna_df, 0.20, chr_arms)
 write_tsv(cna_20_df, "data/cna/cna_class_20_df.txt")
 write.xlsx(cna_20_df, "data/cna/cna_class_20_df.xlsx")
     
 # classify CN by arms - 50%
-cna_50_df <- classifyArms(cna_df, 0.5, chr_arms)
+cna_50_df <- classifySNPArms(cna_df, 0.50, chr_arms)
 write_tsv(cna_50_df, "data/cna/cna_class_50_df.txt")
 write.xlsx(cna_50_df, "data/cna/cna_class_50_df.xlsx")
 
 # classify CN by arms - 80%
-cna_80_df <- classifyArms(cna_df, 0.8, chr_arms)
+cna_80_df <- classifySNPArms(cna_df, 0.80, chr_arms)
 write_tsv(cna_80_df, "data/cna/cna_class_80_df.txt")
 write.xlsx(cna_80_df, "data/cna/cna_class_80_df.xlsx")
 

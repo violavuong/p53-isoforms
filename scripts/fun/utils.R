@@ -32,7 +32,7 @@ binaryConversion <- function(df, th_df, th_col = c(1, 2), mmrf_pts, transcripts)
 }
 
 
-classifyArms <- function(df, cut_off, chr_arms){
+classifySNPArms <- function(df, cut_off, chr_arms){
   alt_df <- list.cbind(lapply(c(6:44), function(x) applyCutOff(df[, ..x], cut_off)))
   colnames(alt_df) <-  paste0(chr_arms, "_alt")
   class_df <- cbind(df, alt_df) %>%
