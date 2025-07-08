@@ -41,6 +41,15 @@ classifyArms <- function(df, cut_off, chr_arms){
 }
 
 
+classifyGenomicArms <- function(df, cut_off, chr_arms){
+  alt_df <- list.cbind(lapply(c(2:46), function(x) applyCutOff(df[, ..x], cut_off)))
+  colnames(alt_df) <-  paste0(chr_arms, "_alt")
+  class_df <- cbind(df, alt_df) %>%
+    select(PUBLIC_ID, starts_with(chr_arms))
+  return(class_df)
+}
+
+
 createQQPlot <- function(df, transcript){
   return(df %>%
            ggplot(aes(sample = !!sym(transcript))) + 
@@ -88,3 +97,12 @@ freqBarplot <- function(df, groups = c("transcript", "group")){
             coord_flip()
          )
 }
+
+
+mergeGenomicData <- function(class_df, mmrf_cln_per_pt, fish_per_pt, t_IgH_per_pt, NS_tp53_per_pt){
+  return(left_join(mmrf_cln_per_pt, class_df, by = "PUBLIC_ID") %>%
+           left_join(fish_per_pt, by = "PUBLIC_ID") %>%
+           left_join(t_IgH_per_pt, by = "PUBLIC_ID") %>%
+           left_join(NS_tp53_per_pt, by = "PUBLIC_ID"))
+}
+

@@ -11,11 +11,13 @@ library(rlist)
 library(tidyverse)
 
 source("C:/Users/Dell/Desktop/git_projects/UMA/UMA_lib/fun/Popeye2.R")
+source("C:/Users/Dell/Desktop/git_projects/TP53/scripts/fun/utils.R")
 
 # ---- Main ----
 # working directories
 wd <- setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/genomic_based/")
 filePath <- "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/Bioinformatics Seràgnoli - IA22/"
+libDir <- "C:/Users/Dell/Desktop/git_projects/UMA/UMA_lib/"
 
 
 # ---- GATK genome copy number ----
@@ -29,8 +31,8 @@ chrarm_CN_df <- Popeye2(gene_CN_df, "hg38", removeXY = FALSE)
 chrarm_CN_df$ID <- str_remove(chrarm_CN_df$ID, "_1_BM_CD138pos")
 names(chrarm_CN_df)[names(chrarm_CN_df)=="ID"] <- "PUBLIC_ID"
 
-# computing the weighted mean CN value: 659 unique pts
-weighted_CN_per_pt <- chrarm_CN_per_pt %>%
+# computing the weighted mean CN value: 877 unique pts
+weighted_CN_per_pt <- chrarm_CN_df %>%
   group_by(PUBLIC_ID, chr, chrarm) %>%
   summarise(weighted_mean_CN = sum(CN * width) / sum(width), 
             start = min(start), 
@@ -40,7 +42,7 @@ weighted_CN_per_pt <- chrarm_CN_per_pt %>%
   select(PUBLIC_ID, chr, chrarm, start, end, width, probes, weighted_mean_CN)
 weighted_CN_per_pt$chrarm <- factor(weighted_CN_per_pt$chrarm, levels = unique(weighted_CN_per_pt$chrarm))
 
-write_tsv(weighted_CN_per_pt, "WGS_weighted_CN_per_pt.tsv")
+write_tsv(weighted_CN_per_pt, "WGS_weighted_CN_per_pt.txt")
 
 
 # ---- Non-synonymous SNVs ----
@@ -60,7 +62,7 @@ tp53_dups <- tp53_nonsyn_snv_tmp_df[duplicated(tp53_nonsyn_snv_tmp_df$PUBLIC_ID)
 NS_tp53_per_pt <- rbind(tp53_nonsyn_snv_tmp_df %>% filter(!PUBLIC_ID %in% tp53_dups$PUBLIC_ID), tp53_dups)
 NS_tp53_per_pt$TP53_CHROM <- as.numeric(str_remove(NS_tp53_per_pt$TP53_CHROM, "chr"))
  
-write_tsv(NS_tp53_per_pt, "NS_TP53_per_pt.tsv")
+write_tsv(NS_tp53_per_pt, "NS_TP53_per_pt.txt")
 
 
 # ---- Translocations ----
@@ -72,7 +74,7 @@ fish_per_pt <- fread(paste0(filePath, "seqFISH/MMRF_CoMMpass_IA22_genome_tumor_o
   mutate(PUBLIC_ID = str_remove(SAMPLE, "_1_BM_CD138pos")) %>%
   select(PUBLIC_ID, ends_with("CALL"))
 
-write_tsv(fish_per_pt, "canonical_t_IgH_FISH_per_pt.tsv")
+write_tsv(fish_per_pt, "canonical_t_IgH_FISH_per_pt.txt")
 
 # NGS: 1461 obs for 315 unique pts
 delly_df <- fread(paste0(filePath, "structural_event/MMRF_CoMMpass_IA22_genome_delly.tsv")) %>% 
@@ -109,54 +111,40 @@ t_IgH_dups <- t_IgH_tmp[duplicated(t_IgH_tmp$PUBLIC_ID) | duplicated(t_IgH_tmp$P
 # binding
 t_IgH_per_pt <- rbind(t_IgH_tmp %>% filter(!PUBLIC_ID %in% t_IgH_dups$PUBLIC_ID), t_IgH_dups) %>%
   rename_with(~c("IGH_CHROM", "IGH_POS", "IGH_CHR2", "IGH_POS2"), c(3,4,5,6))
-write_tsv(t_IgH_per_pt, "canonical_t_IgH_NGS_per_pt.tsv")
+
+write_tsv(t_IgH_per_pt, "canonical_t_IgH_NGS_per_pt.txt")
 
 
 # ---- Classification ----
-classifyArms <- function(df, cut_off, chr_arms){
-  alt_df <- list.cbind(lapply(c(2:46), function(x) applyCutOff(df[, ..x], cut_off)))
-  colnames(alt_df) <-  paste0(chr_arms, "_alt")
-  class_df <- cbind(df, alt_df) %>%
-    select(PUBLIC_ID, starts_with(chr_arms))
-  return(class_df)
-}
-
 # transposing weighted mean CN dataframe 
 weighted_CN_per_chrarm <- dcast(setDT(weighted_CN_per_pt), PUBLIC_ID ~ chrarm, value.var = "weighted_mean_CN")
 
 # applying different cut-offs
-chr_arms <- colnames(mmrf_genomic_per_pt)[43:87]
+chr_arms <- colnames(weighted_CN_per_chrarm)[2:46]
 
-weighted_CN_class_10 <-  classifyArms(weighted_CN_per_chrarm, 0.10, chr_arms) 
-weighted_CN_class_20 <-  classifyArms(weighted_CN_per_chrarm, 0.20, chr_arms) 
-weighted_CN_class_50 <-  classifyArms(weighted_CN_per_chrarm, 0.50, chr_arms) 
-weighted_CN_class_80 <-  classifyArms(weighted_CN_per_chrarm, 0.80, chr_arms) 
+weighted_CN_class_10 <-  classifyGenomicArms(weighted_CN_per_chrarm, 0.10, chr_arms) 
+weighted_CN_class_20 <-  classifyGenomicArms(weighted_CN_per_chrarm, 0.20, chr_arms) 
+weighted_CN_class_50 <-  classifyGenomicArms(weighted_CN_per_chrarm, 0.50, chr_arms) 
+weighted_CN_class_80 <-  classifyGenomicArms(weighted_CN_per_chrarm, 0.80, chr_arms) 
 
 
 # ---- Harmonization ----
 # 754 pts with clinical and transcriptomic data attached
-mmrf_cln_per_pt <- fread("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/clinical_data/mmrf_cln_per_pt.txt")
+mmrf_cln_per_pt <- fread("../clinical_data/mmrf_cln_per_pt.txt")
 mmrf_cln_per_pt <- mmrf_cln_per_pt %>% filter(mmrf_cln_per_pt$PUBLIC_ID %in% weighted_CN_per_pt$PUBLIC_ID) #filtering out pts that do not have CN
 
 # update
-write_tsv(mmrf_cln_per_pt, "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/clinical_data/mmrf_cln_per_pt.txt")
+write_tsv(mmrf_cln_per_pt, "../clinical_data/mmrf_cln_per_pt.txt")
 
 # merging
-mergeGenomicData <- function(class_df, mmrf_cln_per_pt, fish_per_pt, t_IgH_per_pt, NS_tp53_per_pt){
-  return(left_join(mmrf_cln_per_pt, class_df, by = "PUBLIC_ID") %>%
-           left_join(fish_per_pt, by = "PUBLIC_ID") %>%
-           left_join(t_IgH_per_pt, by = "PUBLIC_ID") %>%
-           left_join(NS_tp53_per_pt, by = "PUBLIC_ID"))
-}
-
 mmrf_genomic_per_pt_class_10 <- mergeGenomicData(weighted_CN_class_10, mmrf_cln_per_pt, fish_per_pt, t_IgH_per_pt, NS_tp53_per_pt)
-write_tsv(mmrf_genomic_per_pt_class_10, "mmrf_genomic_per_pt_class_10.tsv")
+write_tsv(mmrf_genomic_per_pt_class_10, "mmrf_genomic_per_pt_class_10.txt")
 
 mmrf_genomic_per_pt_class_20 <- mergeGenomicData(weighted_CN_class_20, mmrf_cln_per_pt, fish_per_pt, t_IgH_per_pt, NS_tp53_per_pt)
-write_tsv(mmrf_genomic_per_pt_class_20, "mmrf_genomic_per_pt_class_20.tsv")
+write_tsv(mmrf_genomic_per_pt_class_20, "mmrf_genomic_per_pt_class_20.txt")
 
 mmrf_genomic_per_pt_class_50 <- mergeGenomicData(weighted_CN_class_50, mmrf_cln_per_pt, fish_per_pt, t_IgH_per_pt, NS_tp53_per_pt)
-write_tsv(mmrf_genomic_per_pt_class_50, "mmrf_genomic_per_pt_class_50.tsv")
+write_tsv(mmrf_genomic_per_pt_class_50, "mmrf_genomic_per_pt_class_50.txt")
 
 mmrf_genomic_per_pt_class_80 <- mergeGenomicData(weighted_CN_class_80, mmrf_cln_per_pt, fish_per_pt, t_IgH_per_pt, NS_tp53_per_pt)
-write_tsv(mmrf_genomic_per_pt_class_80, "mmrf_genomic_per_pt_class_80.tsv")
+write_tsv(mmrf_genomic_per_pt_class_80, "mmrf_genomic_per_pt_class_80.txt")
