@@ -2,7 +2,7 @@
 
 # file: utils.R
 # description: functions
-# last update: 25-06-2025
+# last update: 08-08-2025
 
 
 aggregateIsoforms <- function(df){

@@ -2,7 +2,7 @@
 
 # file: manipulation.R
 # description: data extraction and handling of compelling CoMMpass genomic data
-# last update: 07-07-2025
+# last update: 08-07-2025
 
 library(data.table)
 library(GenomicRanges)
@@ -122,10 +122,10 @@ weighted_CN_per_chrarm <- dcast(setDT(weighted_CN_per_pt), PUBLIC_ID ~ chrarm, v
 # applying different cut-offs
 chr_arms <- colnames(weighted_CN_per_chrarm)[2:46]
 
-weighted_CN_class_10 <-  classifyGenomicArms(weighted_CN_per_chrarm, 0.10, chr_arms) 
-weighted_CN_class_20 <-  classifyGenomicArms(weighted_CN_per_chrarm, 0.20, chr_arms) 
-weighted_CN_class_50 <-  classifyGenomicArms(weighted_CN_per_chrarm, 0.50, chr_arms) 
-weighted_CN_class_80 <-  classifyGenomicArms(weighted_CN_per_chrarm, 0.80, chr_arms) 
+weighted_CN_class_10 <- classifyGenomicArms(weighted_CN_per_chrarm, 0.10, chr_arms) 
+weighted_CN_class_20 <- classifyGenomicArms(weighted_CN_per_chrarm, 0.20, chr_arms) 
+weighted_CN_class_50 <- classifyGenomicArms(weighted_CN_per_chrarm, 0.50, chr_arms) 
+weighted_CN_class_80 <- classifyGenomicArms(weighted_CN_per_chrarm, 0.80, chr_arms) 
 
 
 # ---- Harmonization ----
