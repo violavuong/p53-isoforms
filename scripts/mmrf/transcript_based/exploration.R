@@ -16,12 +16,11 @@ library(readxl)
 library(scales)
 library(tidyverse)
 
-wd <- "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/MM group - Vuong_Viola_Meixian/TP53/"
-setwd(wd)
+wd <- setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
 
 # inputs
-mmrf_cln_per_pt <- fread(paste0(wd, "mmrf_cln_per_pt.txt"))
-mmrf_cpm_per_pt <- fread(paste0(wd, "mmrf_cpm_per_pt.txt"))
+mmrf_cln_per_pt <- fread(paste0(wd, "/clinical_data/mmrf_cln_per_pt.txt"))
+mmrf_cpm_per_pt <- fread(paste0(wd, "/transcript_based/mmrf_cpm_per_pt.txt"))
 mmrf_tp53 <- read_excel("mmrf_tp53.xlsx", sheet = "isoforms")
 
 
@@ -95,8 +94,12 @@ mmrf_tp53_per_pt <- mmrf_tmp_tp53_per_pt %>%
          ther_end = therendy_max, ther_name = thername, ther_cat = thercat, resp, resp_sh = respsh, resp_group, 
          PI, IMID, PI_IMID, mAb, asct, n_asct, maintenance, maint_lena, consolidation,
          start_line_1, end_line_1, best_resp_dy_line_1, PFS_date, PFS_event, PFS_time, OS_date, OS_event, OS_time,
-         ENST00000269305, ENST00000269305_exp, ENST00000420246, ENST00000420246_exp, ENST00000455263, ENST00000455263_exp, 
-         ENST00000504937, ENST00000504937_exp, ENST00000510385, ENST00000510385_exp, ENST00000610292, ENST00000610292_exp)
+         p53_FL = ENST00000269305, p53_FL_exp = ENST00000269305_exp, 
+         p53β = ENST00000420246, p53β_exp = ENST00000420246_exp, 
+         p53γ = ENST00000455263, p53γ_exp = ENST00000455263_exp, 
+         Δ40p53α = ENST00000610292, Δ40p53α_exp = ENST00000610292_exp, 
+         Δ133p53α = ENST00000504937, Δ133p53α_exp = ENST00000504937_exp, 
+         Δ133p53β = ENST00000510385, Δ133p53β_exp = ENST00000510385_exp)
 mmrf_tp53_per_pt$light_chain_type <- tolower(mmrf_tp53_per_pt$light_chain_type)
 mmrf_tp53_per_pt$resp_group <- factor(mmrf_tp53_per_pt$resp_group, levels = unique(mmrf_tp53_per_pt$resp_group))
 
