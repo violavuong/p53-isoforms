@@ -1,7 +1,7 @@
 #!/usr/bin/r
 
 ## file: normalization.R
-## last update: 23-05-2025
+## last update: 08-07-2025
 
 # installing RNA-seq libraries
 if (!require("BiocManager", quietly = TRUE)){
@@ -36,6 +36,10 @@ md_trt <- fread(paste0(pathDir, "clinical_flat_files/CoMMpass_IA22_FlatFiles/MMR
 
 ## md_trt_reg: pts treatment regimen
 md_trt_reg <- fread(paste0(pathDir, "clinical_flat_files/CoMMpass_IA22_FlatFiles/MMRF_CoMMpass_IA22_STAND_ALONE_TREATMENT_REGIMEN.tsv"))
+
+
+## md_surv: pts survival data
+md_surv <- fread(paste0(pathDir, "clinical_flat_files/CoMMpass_IA22_FlatFiles/MMRF_CoMMpass_IA22_STAND_ALONE_SURVIVAL.tsv"))
 
 
 # ----- MMRF data exploration ---- 
@@ -91,11 +95,18 @@ mmrf_reg <- md_trt_reg %>%
   summarise(maintenance = maintenance[which.max(maintenance)], 
             maint_lena = maint_lena[which.max(maint_lena)], 
             consolidation = consolidation[which.max(consolidation)])
+
+## pts survival data
+mmrf_surv <- md_surv %>%
+  select(PUBLIC_ID, start_line_1 = linesdy1, end_line_1 = lineedy1, best_resp_dy_line_1 = bstdy1, 
+         PFS_date = pfsdy1, PFS_event = censpfs1, PFS_time = ttcpfs1, 
+         OS_date = oscdy, OS_event = censos, OS_time = ttcos)
   
 ## merge - 1143 pts have clinical data attached
 mmrf_cln <- left_join(mmrf_pt, mmrf_visit, by = "PUBLIC_ID") %>%
   left_join(mmrf_trt, by = "PUBLIC_ID") %>%
-  left_join(mmrf_reg, by = "PUBLIC_ID")
+  left_join(mmrf_reg, by = "PUBLIC_ID") %>%
+  left_join(mmrf_surv, by = "PUBLIC_ID")
 
 write_tsv(mmrf_cln, "mmrf_cln.txt")
 
@@ -119,13 +130,15 @@ write_tsv(mmrf_lcpm, "mmrf_lcpm.txt")
 
 # ---- MMRF data filtering ----
 # removing replicates, keeping only pts with clinical data attached, PUBLIC_ID as a pt-specific ID: 754 pts
-mmrf_cpm_per_pt <- filterMMRF(mmrf_cpm, mmrf_cln) %>%
-  select(order(colnames(mmrf_cpm_per_pt))) %>%
+mmrf_cpm_per_pt_tmp <- filterMMRF(mmrf_cpm, mmrf_cln) 
+mmrf_cpm_per_pt <- mmrf_cpm_per_pt_tmp %>%
+  select(order(colnames(mmrf_cpm_per_pt_tmp))) %>%
   mutate(transcript = mmrf_tpm$Transcript, .before = MMRF_1021)
 write_tsv(mmrf_cpm_per_pt, "mmrf_cpm_per_pt.txt")
 
-mmrf_lcpm_per_pt <- filterMMRF(mmrf_lcpm, mmrf_cln) %>%
-  select(order(colnames(mmrf_lcpm_per_pt))) %>%
+mmrf_lcpm_per_pt_tmp <- filterMMRF(mmrf_lcpm, mmrf_cln) 
+mmrf_lcpm_per_pt <- mmrf_lcpm_per_pt_tmp%>%
+  select(order(colnames(mmrf_lcpm_per_pt_tmp))) %>%
   mutate(transcript = mmrf_tpm$Transcript, .before = MMRF_1021)
 write_tsv(mmrf_lcpm_per_pt, "mmrf_lcpm_per_pt.txt")
 
