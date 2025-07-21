@@ -168,3 +168,4 @@ write_tsv(mmrf_cpm_per_pt, "../transcript_based/mmrf_cpm_per_pt.txt")
 
 mmrf_lcpm_per_pt <- mmrf_lcpm_per_pt %>% select(transcript, matches(mmrf_cln_per_pt$PUBLIC_ID))
 write_tsv(mmrf_lcpm_per_pt, "../transcript_based/mmrf_lcpm_per_pt.txt")
+
