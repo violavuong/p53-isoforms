@@ -2,17 +2,24 @@
 
 # file: utils.R
 # description: functions
-# last update: 08-08-2025
+# last update: 22-08-2025
 
 
 aggregateIsoforms <- function(df){
   agg_df <- rbind(plyr::numcolwise(sum)(df[c(1,2,3),]), #TA
                   plyr::numcolwise(sum)(df[c(1,2,3,4),]), #long
-                  plyr::numcolwise(sum)(df[c(5,6),]), #short
+                  plyr::numcolwise(sum)(df[c(5,6,7),]), #short
                   plyr::numcolwise(sum)(df[c(1,4,5),]), #alpha
-                  plyr::numcolwise(sum)(df[c(2,6),]))
+                  plyr::numcolwise(sum)(df[c(2,6),]), #beta
+                  plyr::numcolwise(sum)(df[c(3,7),]), #gamma
+                  plyr::numcolwise(sum)(df[c(1,4),]), #long alpha
+                  plyr::numcolwise(sum)(df[c(2),]), #long beta
+                  plyr::numcolwise(sum)(df[c(3),]), #long gamma
+                  plyr::numcolwise(sum)(df[c(5),]), #short alpha
+                  plyr::numcolwise(sum)(df[c(6),]), #short beta
+                  plyr::numcolwise(sum)(df[c(7),])) #short gamma
   agg_df[agg_df >= 1] <- 1 #if at least 1 then 1, otherwise 0
-  agg_df <- agg_df %>% mutate(group = c("TA", "long", "short", "alpha", "beta"))
+  agg_df <- agg_df %>% mutate(group = c("TA", "long", "short", "alpha", "beta", "gamma", "long_alpha", "long_beta", "long_gamma", "short_alpha", "short_beta", "short_gamma"))
   
   return(agg_df)
 }
@@ -62,11 +69,13 @@ createQQPlot <- function(df, transcript){
 }
 
 
-defineTh <- function(df, th = c("median", "perc_75")){
+defineTh <- function(df, th = c("median", "perc_75", "perc_95")){
   if (th=="median"){
     cut_off <- apply(df, 1, median, na.rm = T)
   } else if (th=="perc_75"){
     cut_off <- apply(df, 1, quantile, probs = 0.75)
+  } else if (th=="perc_95"){
+    cut_off <- apply(df, 1, quantile, probs = 0.95)
   } else {
     message("wrong option.")
   }

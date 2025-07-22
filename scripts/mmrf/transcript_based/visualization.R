@@ -1,7 +1,7 @@
 #!/usr/bin/r
 
 ## file: visualization.R
-## last update: 04-06-2025
+## last update: 22-07-2025
 
 # ---- Main ----
 library(ComplexHeatmap)
@@ -18,6 +18,8 @@ library(tidyverse)
 
 wd <- "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/MM group - Vuong_Viola_Meixian/TP53/"
 setwd(wd)
+
+source("C:/Users/Dell/Desktop/git_projects/TP53/scripts/fun/utils.R")
 
 # global input
 mmrf_tp53_per_pt <- fread("mmrf_tp53_per_pt.txt")
@@ -147,7 +149,7 @@ oncoPrint(onco_data,
 
 
 # ---- frequency stacked barplot ----
-mmrf_tmp_tp53 <- mmrf_tp53_per_pt %>% select(ENST00000269305, ENST00000420246, ENST00000455263, ENST00000504937, ENST00000510385, ENST00000610292)
+mmrf_tmp_tp53 <- mmrf_tp53_per_pt %>% select(p53_FL, p53β, p53γ, Δ40p53α, Δ133p53α, Δ133p53β, Δ133p53γ)
 rownames(mmrf_tmp_tp53) <- mmrf_tp53_per_pt$PUBLIC_ID
 mmrf_tp53 <- as.data.frame(t(mmrf_tmp_tp53))
 colnames(mmrf_tp53) <- mmrf_tp53_per_pt$PUBLIC_ID
@@ -158,14 +160,23 @@ mmrf_tp53 <- mmrf_tp53 + 1
 ## defining cut-offs
 medians <- defineTh(mmrf_tp53, "median") #median cut-off
 perc_75 <- defineTh(mmrf_tp53, "perc_75") #75 percentile cut-off
-cut_offs <- as.data.frame(cbind(medians, perc_75), row.names = transcripts)
+perc_95 <- defineTh(mmrf_tp53, "perc_95") #95 percentile cut-off
+cut_offs <- as.data.frame(cbind(medians, perc_75, perc_95))
 
 ## 1/0 conversion
 mmrf_tp53_median_class <- binaryConversion(mmrf_tp53, cut_offs, th_col = 1, mmrf_tp53_per_pt$PUBLIC_ID, rownames(mmrf_tp53)) #by median value
-mmrf_tp53_75perc_class <- binaryConversion(mmrf_tp53, cut_offs, th_col = 2, mmrf_tp53_per_pt$PUBLIC_ID, rownames(mmrf_tp53)) #by 75th percentile 
+mmrf_tp53_median_class$transcript <- factor(mmrf_tp53_median_class$transcript, levels = unique(mmrf_tp53_median_class$transcript))
+
+mmrf_tp53_75perc_class <- binaryConversion(mmrf_tp53, cut_offs, th_col = 2, mmrf_tp53_per_pt$PUBLIC_ID, rownames(mmrf_tp53)) #by 75th percentile
+mmrf_tp53_75perc_class$transcript <- factor(mmrf_tp53_75perc_class$transcript, levels = unique(mmrf_tp53_75perc_class$transcript))
+
+mmrf_tp53_95perc_class <- binaryConversion(mmrf_tp53, cut_offs, th_col = 3, mmrf_tp53_per_pt$PUBLIC_ID, rownames(mmrf_tp53)) #by 95th percentile 
+mmrf_tp53_95perc_class$transcript <- factor(mmrf_tp53_95perc_class$transcript, levels = unique(mmrf_tp53_95perc_class$transcript))
+
 
 ## median
 mmrf_tp53_median_groups <- aggregateIsoforms(mmrf_tp53_median_class)
+mmrf_tp53_median_groups$group <- factor(mmrf_tp53_median_groups$group, levels = unique(mmrf_tp53_median_groups$group))
 
 ### per isoform
 freq_median <- freqBarplot(mmrf_tp53_median_class, "transcript") +
@@ -175,9 +186,12 @@ freq_median <- freqBarplot(mmrf_tp53_median_class, "transcript") +
 group_median <- freqBarplot(mmrf_tp53_median_groups, "group") +
   labs(title = "Frequency per isoform group - median cut-off", x = "group", y = "count", fill = "presence/absence")
 
+ggsave("mmrf_tp53_frequency_group_barplot.png", group_median, height = 10, width = 18, dpi = 400, bg = "white")
+
 
 ## 75th percentile
 mmrf_tp53_75perc_groups <- aggregateIsoforms(mmrf_tp53_75perc_class)
+mmrf_tp53_75perc_groups$group <- factor(mmrf_tp53_75perc_groups$group, levels = unique(mmrf_tp53_75perc_groups$group))
 
 ### per isoform
 freq_75perc <- freqBarplot(mmrf_tp53_75perc_class, "transcript") +
@@ -191,6 +205,18 @@ ggsave("mmrf_tp53_frequency_barplot.png",
        wrap_plots(freq_median, freq_75perc, group_median, group_75perc, nrow = 2) + plot_layout(guides = "collect"), 
        height = 10, width = 18, dpi = 400, bg = "white")
 
+
+## 95th percentile
+mmrf_tp53_95perc_groups <- aggregateIsoforms(mmrf_tp53_95perc_class)
+mmrf_tp53_95perc_groups$group <- factor(mmrf_tp53_95perc_groups$group, levels = unique(mmrf_tp53_95perc_groups$group))
+
+### per isoform
+freq_95perc <- freqBarplot(mmrf_tp53_95perc_class, "transcript") +
+  labs(title = "Frequency per isoform - 95th cut-off", x = "isoform", y = "count", fill = "presence/absence")
+
+### per group
+group_95perc <- freqBarplot(mmrf_tp53_95perc_groups, "group") +
+  labs(title = "Frequency per isoform group - 95th cut-off", x = "group", y = "count", fill = "presence/absence")
 
 # ---- transcripts/relative abundance/log relative abundance boxplot ----
 ## transcripts

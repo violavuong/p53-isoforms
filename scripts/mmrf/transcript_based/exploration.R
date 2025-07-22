@@ -99,11 +99,12 @@ mmrf_tp53_per_pt <- mmrf_tmp_tp53_per_pt %>%
          p53γ = ENST00000455263, p53γ_exp = ENST00000455263_exp, 
          Δ40p53α = ENST00000610292, Δ40p53α_exp = ENST00000610292_exp, 
          Δ133p53α = ENST00000504937, Δ133p53α_exp = ENST00000504937_exp, 
-         Δ133p53β = ENST00000510385, Δ133p53β_exp = ENST00000510385_exp)
+         Δ133p53β = ENST00000510385, Δ133p53β_exp = ENST00000510385_exp, 
+         Δ133p53γ = ENST00000504290, Δ133p53γ_exp = ENST00000504290_exp)
 mmrf_tp53_per_pt$light_chain_type <- tolower(mmrf_tp53_per_pt$light_chain_type)
 mmrf_tp53_per_pt$resp_group <- factor(mmrf_tp53_per_pt$resp_group, levels = unique(mmrf_tp53_per_pt$resp_group))
 
-write_tsv(mmrf_tp53_per_pt, "mmrf_tp53_per_pt.txt")
+write_tsv(mmrf_tp53_per_pt, "/transcript_based/mmrf_tp53_per_pt.txt")
 
 
 # ---- Fisher/chi-square significance ----
