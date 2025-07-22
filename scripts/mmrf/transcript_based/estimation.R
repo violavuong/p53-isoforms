@@ -51,13 +51,13 @@ roundSig <- function(x, digits = 3) {
 mmrf_tp53_ratio_per_pt <- mmrf_tp53_counts_per_pt %>%
   mutate(r_Δ40_FL = roundSig(Δ40p53α/p53_FL), 
          r_Δ133_FL = roundSig(Δ133p53α/p53_FL),
-         P3_FL_Δ40 = roundSig(computeProb(r_Δ40_FL, 3)), 
-         P2_FL_Δ40 = roundSig(computeProb(r_Δ40_FL, 2)), 
-         P1_FL_Δ40 = roundSig(computeProb(r_Δ40_FL, 1)), 
+         P3_FL_Δ40 = roundSig(4 * computeProb(r_Δ40_FL, 3)), 
+         P2_FL_Δ40 = roundSig(6 * computeProb(r_Δ40_FL, 2)), 
+         P1_FL_Δ40 = roundSig(4 * computeProb(r_Δ40_FL, 1)), 
          P0_FL_Δ40 = roundSig(computeProb(r_Δ40_FL, 0)), 
-         P3_FL_Δ133 = roundSig(computeProb(r_Δ133_FL, 3)), 
-         P2_FL_Δ133 = roundSig(computeProb(r_Δ133_FL, 2)), 
-         P1_FL_Δ133 = roundSig(computeProb(r_Δ133_FL, 1)), 
+         P3_FL_Δ133 = roundSig(4 * computeProb(r_Δ133_FL, 3)), 
+         P2_FL_Δ133 = roundSig(6 * computeProb(r_Δ133_FL, 2)), 
+         P1_FL_Δ133 = roundSig(4 * computeProb(r_Δ133_FL, 1)), 
          P0_FL_Δ133 = roundSig(computeProb(r_Δ133_FL, 0))) %>%
   rownames_to_column("PUBLIC_ID")
 
