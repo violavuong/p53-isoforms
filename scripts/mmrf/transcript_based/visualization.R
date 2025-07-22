@@ -220,10 +220,22 @@ group_95perc <- freqBarplot(mmrf_tp53_95perc_groups, "group") +
 
 # ---- transcripts/relative abundance/log relative abundance boxplot ----
 ## transcripts
-mmrf_tp53_ann %>%
+mmrf_tp53_ann$transcript_name <- factor(mmrf_tp53_ann$transcript_name, levels = unique(mmrf_tp53_ann$transcript_name))
+
+mmrf_tp53_ann_fig <- mmrf_tp53_ann %>%
   ggplot(aes(xstart = start, xend = end, y = transcript_name)) +
   geom_range(aes(fill = transcript_biotype)) +
-  geom_intron(data = to_intron(mmrf_tp53_ann, "transcript_name"))
+  geom_intron(data = to_intron(mmrf_tp53_ann, "transcript_name"), 
+              arrow.min.intron.length = 100000) +
+  geom_text(data = add_exon_number(mmrf_tp53_ann, "transcript_name"), aes(x = (start + end) / 2, label = exon_number),
+            size = 3.5, nudge_y = 0.4) +
+  labs(title = "TP53 isoforms transcript", x = "Genomic coordinates", y = "Isoform") +
+  scale_fill_manual(values = c("grey")) +
+  scale_y_discrete(limits = rev) +
+  theme() +
+  theme_minimal()
+
+ggsave("tp53_isoforms_transcripts.png", mmrf_tp53_ann_fig, height = 10, width = 18, dpi = 400, bg = "white")
 
 
 ## relative abundance
