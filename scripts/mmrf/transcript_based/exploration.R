@@ -1,7 +1,7 @@
 #!/usr/bin/r
 
 ## file: exploration.R
-## last update: 08-07-2025
+## last update: 23-07-2025
 
 # installing required packages
 install.packages(c("ggridges", "gtsummary"))
@@ -84,7 +84,7 @@ mmrf_tmp_tp53_per_pt <- mmrf_tp53_cpm_per_pt %>%
   rownames_to_column("PUBLIC_ID") %>%
   left_join(mmrf_cln_per_pt, by = "PUBLIC_ID") %>% # Join with your clinical data
   mutate(across(.cols = starts_with("ENST"), 
-                .fns = ~ factor(ifelse(.x > median_per_tp53[[cur_column()]], "high", "low"), levels = c("low", "high")),
+                .fns = ~ factor(ifelse(.x==0, "absent", ifelse(.x > median_per_tp53[[cur_column()]], "high", "low")), levels = c("absent", "low", "high")),
                 .names = "{.col}_exp"), 
          resp_group = ifelse(respsh=="", NA, ifelse(respsh %in% c("sCR", "CR", "VGPR"), "responder", "non_responder")), .after = respsh)
 
@@ -104,7 +104,7 @@ mmrf_tp53_per_pt <- mmrf_tmp_tp53_per_pt %>%
 mmrf_tp53_per_pt$light_chain_type <- tolower(mmrf_tp53_per_pt$light_chain_type)
 mmrf_tp53_per_pt$resp_group <- factor(mmrf_tp53_per_pt$resp_group, levels = unique(mmrf_tp53_per_pt$resp_group))
 
-write_tsv(mmrf_tp53_per_pt, "/transcript_based/mmrf_tp53_per_pt.txt")
+write_tsv(mmrf_tp53_per_pt, "transcript_based/mmrf_tp53_per_pt.txt")
 
 
 # ---- Fisher/chi-square significance ----
