@@ -74,23 +74,20 @@ write_tsv(mmrf_tp53_ratio_per_pt, "transcript_based/mmrf_tp53_ratio_per_pt.txt")
 
 # ---- Plotting ----
 #D40
-prob_Δ40_FL <- mmrf_tp53_ratio_per_pt %>% select(PUBLIC_ID, P4_FL_Δ40, P3_FL_Δ40, P2_FL_Δ40, P1_FL_Δ40, P0_FL_Δ40)
-stats <- unlist(lapply(seq_along(prob_Δ40_FL)[-1], function(x) quantile(prob_Δ40_FL[, x], probs = c(0.25, 0.50, 0.75))))
-Δ40_FL_stats <- data.frame(group = colnames(prob_Δ40_FL)[-1],
-                           IQR1 = stats[c(1,4,7,10,13)],
-                           median = stats[c(2,5,8,11,14)], 
-                           IQR3 = stats[c(3,6,9,12,15)])
+prob_Δ40_FL <- mmrf_tp53_ratio_per_pt %>% 
+  select(PUBLIC_ID, P4_FL_Δ40, P3_FL_Δ40, P2_FL_Δ40, P1_FL_Δ40, P0_FL_Δ40) %>%
+  pivot_longer(cols = starts_with(c("P4", "P3", "P2", "P1", "P0")), names_to = "group", values_to = "probability")
+prob_Δ40_FL$group <- factor(prob_Δ40_FL$group, levels = unique(prob_Δ40_FL$group))
 
-prob_Δ40_FL_long <- pivot_longer(prob_Δ40_FL, cols = starts_with(c("P4", "P3", "P2", "P1", "P0")), names_to = "group", values_to = "probability") %>%
-  left_join(Δ40_FL_stats, by = "group")
-prob_Δ40_FL_long$group <- factor(prob_Δ40_FL_long$group, levels = unique(prob_Δ40_FL_long$group))
-
-prob_Δ40_FL_long %>%
+prob_Δ40_FL %>%
   ggplot(aes(x = group, y = probability)) +
     geom_point(aes(colour = group)) +
-    #geom_errorbar(aes(ymin = IQR1, ymax = IQR3)) +
-    stat_summary(fun.data = prob_Δ40_FL_long, fun.args = list(IQR1, IQR3), geom = "errorbar", color = "black", width = 0.4) +
-    stat_summary(fun.y = median, geom = "point", color = "black") +
+    stat_summary(aes(x = group, y = probability), 
+                 fun.min = function(z) { quantile(z, 0.25) }, 
+                 fun.max = function(z) { quantile(z, 0.75) },
+                 geom = "errorbar", color = "black", size = 1.2, width = 0.1) +
+    stat_summary(aes(x = group, y = probability), 
+                 fun = median, geom = "point", position = position_dodge(width = 0.5)) +
     theme_minimal()
 
 #D133
@@ -101,5 +98,12 @@ prob_Δ133_FL$group <- factor(prob_Δ133_FL$group, levels = unique(prob_Δ133_FL
 
 prob_Δ133_FL %>%
   ggplot(aes(x = group, y = probability)) +
-  geom_boxplot()
-
+    geom_point(aes(colour = group)) +
+    scale_y_continuous(limits = c(0, 1)) +
+    stat_summary(aes(x = group, y = probability), 
+                 fun.min = function(z) { quantile(z, 0.25) }, 
+                 fun.max = function(z) { quantile(z, 0.75) },
+                 geom = "errorbar", color = "black", size = 1.2, width = 0.1) +
+    stat_summary(aes(x = group, y = probability), 
+                 fun = median, geom = "point", position = position_dodge(width = 0.5))
+    theme_minimal()
