@@ -78,7 +78,9 @@ sink()
 
 
 # ---- categorization ----
-median_per_tp53 <- mmrf_tp53_cpm_per_pt %>% summarise(across(everything(), median))
+#mmrf_tp53_cpm_per_pt[mmrf_tp53_cpm_per_pt==0] <- NA
+#mmrf_tp53_cpm_per_pt[is.na(mmrf_tp53_cpm_per_pt)] <- 0
+median_per_tp53 <- mmrf_tp53_cpm_per_pt %>% summarise(across(everything(), ~median(.[. > 0])))
 
 mmrf_tmp_tp53_per_pt <- mmrf_tp53_cpm_per_pt %>%
   rownames_to_column("PUBLIC_ID") %>%
