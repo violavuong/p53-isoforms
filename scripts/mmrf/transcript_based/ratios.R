@@ -7,6 +7,7 @@
 library(data.table)
 library(flextable)
 library(ggplot2)
+library(RColorBrewer)
 library(tidyverse)
 
 source("C:/Users/Dell/Desktop/git_projects/TP53/scripts/fun/utils.R")
@@ -46,7 +47,7 @@ mmrf_tmp_rt_exp_per_isoform <- mmrf_rt_per_isoform %>%
          rt_Δ133p53γ_FL_exp = ifelse(rt_Δ133p53γ_FL > rt_cut_offs[6], "high_ratio", "low_ratio"))
 
 # binding
-isoforms_exp <- c("p53β_exp", "p53γ_exp", "Δ40p53α_exp", "Δ133p53α_exp", "Δ133p53β_exp", "Δ133p53γ_exp")
+isoforms_exp <- c("p53_FL_exp", "p53β_exp", "p53γ_exp", "Δ40p53α_exp", "Δ133p53α_exp", "Δ133p53β_exp", "Δ133p53γ_exp")
 mmrf_rt_exp_per_isoform <- cbind(mmrf_tp53_per_pt %>% select(resp_sh, matches(isoforms_exp)), 
                                  mmrf_tmp_rt_exp_per_isoform %>% select(ends_with("exp"))) 
 mmrf_rt_exp_per_isoform[mmrf_rt_exp_per_isoform==""] <- NA
@@ -105,8 +106,8 @@ save_as_html("p53β" = p53β_tbl, "p53γ" = p53γ_tbl, "Δ40p53α" = Δ40p53α_t
              path = "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/exp_rt_frequency_tbl.html")
 
 
-# ---- Plotting ----
-stackedBarRatio <- function(df, exp_col, ratio_col){
+# ---- Plotting: exp over ratio ----
+stackedBarExpRatio <- function(df, exp_col, ratio_col){
   return(df %>%
            select(resp_sh, !!sym(exp_col), !!sym(ratio_col)) %>%
            count(resp_sh, !!sym(exp_col), !!sym(ratio_col), name = "count") %>%
@@ -121,37 +122,87 @@ stackedBarRatio <- function(df, exp_col, ratio_col){
 
 
 # p53β
-mmrf_p53β_ratio <- stackedBarRatio(mmrf_rt_exp_per_isoform_per_resp, "p53β_exp", "rt_p53β_FL_exp") +
+mmrf_p53β_exp_rt <- stackedBarExpRatio(mmrf_rt_exp_per_isoform_per_resp, "p53β_exp", "rt_p53β_FL_exp") +
   labs(title = "p53β_exp/rt_p53β_FL_exp")
-ggsave(paste0(outDir, "p53β_exp_ratio.png"), mmrf_p53β_ratio, height = 10, width = 18, dpi = 400, bg = "white")
+ggsave(paste0(outDir, "p53β_exp_ratio.png"), mmrf_p53β_exp_rt, height = 10, width = 18, dpi = 400, bg = "white")
 
 
 # p53γ
-mmrf_p53γ_ratio <- stackedBarRatio(mmrf_rt_exp_per_isoform_per_resp, "p53γ_exp", "rt_p53γ_FL_exp") +
+mmrf_p53γ_exp_rt <- stackedBarExpRatio(mmrf_rt_exp_per_isoform_per_resp, "p53γ_exp", "rt_p53γ_FL_exp") +
   labs(title = "p53γ_exp/rt_p53γ_FL_exp")
-ggsave(paste0(outDir, "p53γ_exp_ratio.png"), mmrf_p53γ_ratio, height = 10, width = 18, dpi = 400, bg = "white")
+ggsave(paste0(outDir, "p53γ_exp_ratio.png"), mmrf_p53γ_exp_rt, height = 10, width = 18, dpi = 400, bg = "white")
 
 
 # Δ40p53α
-mmrf_Δ40p53α_ratio <- stackedBarRatio(mmrf_rt_exp_per_isoform_per_resp, "Δ40p53α_exp", "rt_Δ40p53α_FL_exp") +
+mmrf_Δ40p53α_exp_rt <- stackedBarExpRatio(mmrf_rt_exp_per_isoform_per_resp, "Δ40p53α_exp", "rt_Δ40p53α_FL_exp") +
   labs(title = "Δ40p53α_exp/rt_Δ40p53α_FL_exp")
-ggsave(paste0(outDir, "Δ40p53α_exp_ratio.png"), mmrf_Δ40p53α_ratio, height = 10, width = 18, dpi = 400, bg = "white")
+ggsave(paste0(outDir, "Δ40p53α_exp_ratio.png"), mmrf_Δ40p53α_exp_rt, height = 10, width = 18, dpi = 400, bg = "white")
 
 
 # Δ133p53α
-mmrf_Δ133p53α_ratio <- stackedBarRatio(mmrf_rt_exp_per_isoform_per_resp, "Δ133p53α_exp", "rt_Δ133p53α_FL_exp") +
+mmrf_Δ133p53α_exp_rt <- stackedBarExpRatio(mmrf_rt_exp_per_isoform_per_resp, "Δ133p53α_exp", "rt_Δ133p53α_FL_exp") +
   labs(title = "Δ133p53α_exp/rt_Δ133p53α_FL_exp")
-ggsave(paste0(outDir, "Δ133p53α_exp_ratio.png"), mmrf_Δ133p53α_ratio, height = 10, width = 18, dpi = 400, bg = "white")
+ggsave(paste0(outDir, "Δ133p53α_exp_ratio.png"), mmrf_Δ133p53α_exp_rt, height = 10, width = 18, dpi = 400, bg = "white")
 
 
 # Δ133p53β
-mmrf_Δ133p53β_ratio <- stackedBarRatio(mmrf_rt_exp_per_isoform_per_resp, "Δ133p53β_exp", "rt_Δ133p53β_FL_exp") +
+mmrf_Δ133p53β_exp_rt <- stackedBarExpRatio(mmrf_rt_exp_per_isoform_per_resp, "Δ133p53β_exp", "rt_Δ133p53β_FL_exp") +
   labs(title = "Δ133p53β_exp/rt_Δ133p53β_FL_exp")
-ggsave(paste0(outDir, "Δ133p53β_exp_ratio.png"), mmrf_Δ133p53β_ratio, height = 10, width = 18, dpi = 400, bg = "white")
+ggsave(paste0(outDir, "Δ133p53β_exp_ratio.png"), mmrf_Δ133p53β_exp_rt, height = 10, width = 18, dpi = 400, bg = "white")
 
 
 # Δ133p53γ
-mmrf_Δ133p53γ_ratio <- stackedBarRatio(mmrf_rt_exp_per_isoform_per_resp, "Δ133p53γ_exp", "rt_Δ133p53γ_FL_exp") +
+mmrf_Δ133p53γ_exp_rt <- stackedBarExpRatio(mmrf_rt_exp_per_isoform_per_resp, "Δ133p53γ_exp", "rt_Δ133p53γ_FL_exp") +
   labs(title = "Δ133p53γ_exp/rt_Δ133p53γ_FL_exp")
-ggsave(paste0(outDir, "Δ133p53γ_exp_ratio.png"), mmrf_Δ133p53γ_ratio, height = 10, width = 18, dpi = 400, bg = "white")
+ggsave(paste0(outDir, "Δ133p53γ_exp_ratio.png"), mmrf_Δ133p53γ_exp_rt, height = 10, width = 18, dpi = 400, bg = "white")
+
+
+# ---- Plotting: exp-FL over ratio ----
+stackedBarRatio <- function(df, exp_col, ratio_col){
+  return(df %>%
+           select(resp_sh, p53_FL_exp, !!sym(exp_col), !!sym(ratio_col)) %>%
+           mutate(FL_isoform_exp = paste(p53_FL_exp, !!sym(exp_col), sep = "-")) %>%
+           count(resp_sh, FL_isoform_exp, !!sym(ratio_col), name = "count") %>%
+            ggplot(aes(x = !!sym(ratio_col), y = count, fill = FL_isoform_exp)) +
+              geom_bar(position = "fill", stat = "identity") +
+              facet_wrap(~resp_sh, nrow = 2) +
+              labs(x = "", y = "") +
+              scale_fill_brewer(palette = "YlGnBu") +
+              theme_minimal()
+  )
+}
+
+# p53β
+mmrf_p53β_rt <- stackedBarRatio(mmrf_rt_exp_per_isoform_per_resp, "p53β_exp", "rt_p53β_FL_exp") +
+  labs(title = "p53FL_β_exp/rt_p53β_FL_exp")
+ggsave(paste0(outDir, "p53β_rt.png"), mmrf_p53β_rt, height = 10, width = 18, dpi = 400, bg = "white")
+
+# p53γ
+mmrf_p53γ_rt <- stackedBarRatio(mmrf_rt_exp_per_isoform_per_resp, "p53γ_exp", "rt_p53γ_FL_exp") +
+  labs(title = "p53FL_γ_exp/rt_p53γ_FL_exp")
+ggsave(paste0(outDir, "p53γ_rt.png"), mmrf_p53γ_rt, height = 10, width = 18, dpi = 400, bg = "white")
+
+
+# Δ40p53α
+mmrf_Δ40p53α_rt <- stackedBarRatio(mmrf_rt_exp_per_isoform_per_resp, "Δ40p53α_exp", "rt_Δ40p53α_FL_exp") +
+  labs(title = "Δ40p53α_FL_exp/rt_Δ40p53α_FL_exp")
+ggsave(paste0(outDir, "Δ40p53α_rt.png"), mmrf_Δ40p53α_rt, height = 10, width = 18, dpi = 400, bg = "white")
+
+
+# Δ133p53α
+mmrf_Δ133p53α_rt <- stackedBarRatio(mmrf_rt_exp_per_isoform_per_resp, "Δ133p53α_exp", "rt_Δ133p53α_FL_exp") +
+  labs(title = "Δ133p53α_FL_exp/rt_Δ133p53α_FL_exp")
+ggsave(paste0(outDir, "Δ133p53α_rt.png"), mmrf_Δ133p53α_rt, height = 10, width = 18, dpi = 400, bg = "white")
+
+
+# Δ133p53β
+mmrf_Δ133p53β_rt <- stackedBarRatio(mmrf_rt_exp_per_isoform_per_resp, "Δ133p53β_exp", "rt_Δ133p53β_FL_exp") +
+  labs(title = "Δ133p53β_FL_exp/rt_Δ133p53β_FL_exp")
+ggsave(paste0(outDir, "Δ133p53β_rt.png"), mmrf_Δ133p53β_rt, height = 10, width = 18, dpi = 400, bg = "white")
+
+
+# Δ133p53γ
+mmrf_Δ133p53γ_rt <- stackedBarRatio(mmrf_rt_exp_per_isoform_per_resp, "Δ133p53γ_exp", "rt_Δ133p53γ_FL_exp") +
+  labs(title = "Δ133p53γ_FL_exp/rt_Δ133p53γ_FL_exp")
+ggsave(paste0(outDir, "Δ133p53γ_rt.png"), mmrf_Δ133p53γ_rt, height = 10, width = 18, dpi = 400, bg = "white")
 
