@@ -3,11 +3,12 @@
 ## file: ratios.R
 ## last update: 30-07-2025
 
-
+library(crosstable)
 library(data.table)
 library(flextable)
 library(ggplot2)
 library(RColorBrewer)
+library(openxlsx)
 library(tidyverse)
 
 source("C:/Users/Dell/Desktop/git_projects/TP53/scripts/fun/utils.R")
@@ -67,38 +68,35 @@ write_tsv(mmrf_rt_exp_per_isoform_per_resp, "transcript_based/mmrf_rt_exp_per_is
 # ---- Frequency tbl ----
 # p53β
 p53β_df <- mmrf_rt_exp_per_isoform_per_resp %>% select(resp_sh, p53β_exp, rt_p53β_FL_exp)
-p53β_tbl <- crosstable(p53β_df, by = c(rt_p53β_FL_exp, p53β_exp), label = FALSE, total = TRUE) %>%
-  as_flextable(compact = TRUE, header_shown_n = 1:2)
-
+p53β_tbl <- crosstable(p53β_df, by = c(rt_p53β_FL_exp, p53β_exp), label = FALSE, total = TRUE)
+write.xlsx(p53β_tbl, "C:/Users/Dell/Desktop/beta.xlsx")
 
 # p53γ
 p53γ_df <- mmrf_rt_exp_per_isoform_per_resp %>% select(resp_sh, p53γ_exp, rt_p53γ_FL_exp)
-p53γ_tbl <- crosstable(p53γ_df, by = c(rt_p53γ_FL_exp, p53γ_exp), label = FALSE, total = TRUE) %>%
-  as_flextable(compact = TRUE, header_shown_n = 1:2)
-
+p53γ_tbl <- crosstable(p53γ_df, by = c(rt_p53γ_FL_exp, p53γ_exp), label = FALSE, total = TRUE)
+write.xlsx(p53γ_tbl, "C:/Users/Dell/Desktop/gamma.xlsx")
 
 # Δ40p53α
 Δ40p53α_df <- mmrf_rt_exp_per_isoform_per_resp %>% select(resp_sh, Δ40p53α_exp, rt_Δ40p53α_FL_exp)
-Δ40p53α_tbl <- crosstable(Δ40p53α_df, by = c(rt_Δ40p53α_FL_exp, Δ40p53α_exp), label = FALSE, total = TRUE) %>%
-  as_flextable(compact = TRUE, header_shown_n = 1:2)
-
+Δ40p53α_tbl <- crosstable(Δ40p53α_df, by = c(rt_Δ40p53α_FL_exp, Δ40p53α_exp), label = FALSE, total = TRUE)
+write.xlsx(Δ40p53α_tbl, "C:/Users/Dell/Desktop/delta40.xlsx")
 
 # Δ133p53α
 Δ133p53α_df <- mmrf_rt_exp_per_isoform_per_resp %>% select(resp_sh, Δ133p53α_exp, rt_Δ133p53α_FL_exp)
-Δ133p53α_tbl <- crosstable(Δ133p53α_df, by = c(rt_Δ133p53α_FL_exp, Δ133p53α_exp), label = FALSE, total = TRUE) %>%
-  as_flextable(compact = TRUE, header_shown_n = 1:2)
-
+Δ133p53α_tbl <- crosstable(Δ133p53α_df, by = c(rt_Δ133p53α_FL_exp, Δ133p53α_exp), label = FALSE, total = TRUE)
+write.xlsx(Δ133p53α_tbl, "C:/Users/Dell/Desktop/delta133alpha.xlsx")
 
 # Δ133p53β
 Δ133p53β_df <- mmrf_rt_exp_per_isoform_per_resp %>% select(resp_sh, Δ133p53β_exp, rt_Δ133p53β_FL_exp)
-Δ133p53β_tbl <- crosstable(Δ133p53β_df, by = c(rt_Δ133p53β_FL_exp, Δ133p53β_exp), label = FALSE, total = TRUE) %>%
-  as_flextable(compact = TRUE, header_shown_n = 1:2)
+Δ133p53β_tbl <- crosstable(Δ133p53β_df, by = c(rt_Δ133p53β_FL_exp, Δ133p53β_exp), label = FALSE, total = TRUE)
+write.xlsx(Δ133p53β_tbl, "C:/Users/Dell/Desktop/delta133beta.xlsx")
 
 
 # Δ133p53γ
 Δ133p53γ_df <- mmrf_rt_exp_per_isoform_per_resp %>% select(resp_sh, Δ133p53γ_exp, rt_Δ133p53γ_FL_exp)
-Δ133p53γ_tbl <- crosstable(Δ133p53γ_df, by = c(rt_Δ133p53γ_FL_exp, Δ133p53γ_exp), label = FALSE, total = TRUE) %>%
-  as_flextable(compact = TRUE, header_shown_n = 1:2)
+Δ133p53γ_tbl <- crosstable(Δ133p53γ_df, by = c(rt_Δ133p53γ_FL_exp, Δ133p53γ_exp), label = FALSE, total = TRUE)
+write.xlsx(Δ133p53γ_tbl, "C:/Users/Dell/Desktop/delta133gamma.xlsx")
+
 
 
 save_as_html("p53β" = p53β_tbl, "p53γ" = p53γ_tbl, "Δ40p53α" = Δ40p53α_tbl, 
