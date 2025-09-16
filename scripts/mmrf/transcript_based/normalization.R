@@ -19,7 +19,7 @@ library(tidyverse)
 
 
 pathDir <- "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/Bioinformatics Seràgnoli - IA22/"
-setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/MM group - Vuong_Viola_Meixian/TP53/")
+setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
 
 # mmrf input data - normalized transcript-per-million
 mmrf_tpm <- fread(paste0(pathDir, "expression_estimates_transcript_based/MMRF_CoMMpass_IA22_salmon_transcriptUnstrandedIgFiltered_tpm.tsv"))
@@ -100,7 +100,8 @@ mmrf_reg <- md_trt_reg %>%
 mmrf_surv <- md_surv %>%
   select(PUBLIC_ID, start_line_1 = linesdy1, end_line_1 = lineedy1, best_resp_dy_line_1 = bstdy1, 
          PFS_date = pfsdy1, PFS_event = censpfs1, PFS_time = ttcpfs1, 
-         OS_date = oscdy, OS_event = censos, OS_time = ttcos)
+         OS_date = oscdy, OS_event = censos, OS_time = ttcos, 
+         deathdy, lstalive, lvisitdy, lastdy)
   
 ## merge - 1143 pts have clinical data attached
 mmrf_cln <- left_join(mmrf_pt, mmrf_visit, by = "PUBLIC_ID") %>%
@@ -108,7 +109,7 @@ mmrf_cln <- left_join(mmrf_pt, mmrf_visit, by = "PUBLIC_ID") %>%
   left_join(mmrf_reg, by = "PUBLIC_ID") %>%
   left_join(mmrf_surv, by = "PUBLIC_ID")
 
-write_tsv(mmrf_cln, "mmrf_cln.txt")
+write_tsv(mmrf_cln, "clinical_data/mmrf_cln.txt")
 
 
 # ---- MMRF data normalization ----
@@ -155,7 +156,7 @@ mmrf_cln_per_pt <- mmrf_cln %>%
               c(2:19)) %>%
   arrange(PUBLIC_ID)
 
-write_tsv(mmrf_cln_per_pt, "mmrf_cln_per_pt.txt")
+write_tsv(mmrf_cln_per_pt, "clinical_data/mmrf_cln_per_pt.txt")
 
 
 # update: harmonizing every data: pts with clinical, genomic and transcriptomic data: 659 pts
