@@ -1,11 +1,10 @@
 #!/usr/bin/r
 
 ## file: estimation.R
-## last update: 09-09-2025
+## last update: 07-10-2025
 
 
 library(data.table)
-library(ggbeeswarm)
 library(gghalves)
 library(ggplot2)
 library(readxl)
@@ -56,19 +55,22 @@ norm_prob_Δ40_FL <- mmrf_tp53_norm_prob_per_pt %>%
   pivot_longer(cols = starts_with(c("P4", "P3", "P2", "P1", "P0")), names_to = "group", values_to = "probability")
 norm_prob_Δ40_FL$group <- factor(norm_prob_Δ40_FL$group, levels = unique(norm_prob_Δ40_FL$group))
     
-norm_prob_Δ40_FL %>%
+norm_prob_Δ40_FL_boxplot <- norm_prob_Δ40_FL %>%
   filter(!is.na(probability)) %>%
   ggplot(aes(x = group, y = probability, color = group)) +
     geom_jitter(width = 0.2, height = 0, size = 2, alpha = 0.8) +
+    labs(x = "") +
     scale_color_manual(values = c("navajowhite", "burlywood3", "lightskyblue", "#84B5FD", "navy")) + 
-    scale_y_continuous(limits = c(0, 1)) +
     stat_summary(aes(x = group, y = probability, color = group), 
                  fun.min = function(z) { quantile(z, 0.25) },
                  fun.max = function(z) { quantile(z, 0.75) },
-                 geom = "errorbar", color = "black", size = 1.2, width = 0.1) +
+                 geom = "errorbar", color = "black", size = 1.2, width = 0.3) +
     stat_summary(aes(x = group, y = probability, color = group), 
-                 fun = median, geom = "errorbar", color = "black") +
+                 fun = median, geom = "errorbar", color = "black", size = 0.5, width = 0.2) +
     theme_minimal()
+
+ggsave("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/mmrf_norm_prob_Δ40_FL.png", 
+       norm_prob_Δ40_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 10)
     
 #D133
 norm_prob_Δ133_FL <- mmrf_tp53_norm_prob_per_pt %>%
@@ -76,68 +78,59 @@ norm_prob_Δ133_FL <- mmrf_tp53_norm_prob_per_pt %>%
   pivot_longer(cols = starts_with(c("P4", "P3", "P2", "P1", "P0")), names_to = "group", values_to = "probability")
 norm_prob_Δ133_FL$group <- factor(norm_prob_Δ133_FL$group, levels = unique(norm_prob_Δ133_FL$group))
 
-norm_prob_Δ133_FL %>%
+norm_prob_Δ133_FL_boxplot <- norm_prob_Δ133_FL %>%
   filter(!is.na(probability)) %>%
   ggplot(aes(x = group, y = probability, colour = group)) +
     geom_jitter(width = 0.2, height = 0, size = 2, alpha = 0.8) +
+    labs(x = "") +
     scale_color_manual(values = c("navajowhite", "burlywood3", "lightskyblue", "#84B5FD", "navy")) + 
     stat_summary(aes(x = group, y = probability), 
                  fun.min = function(z) { quantile(z, 0.25) },
                  fun.max = function(z) { quantile(z, 0.75) },
-                 geom = "errorbar", color = "black", size = 1.2, width = 0.4) +
+                 geom = "errorbar", color = "black", size = 1.2, width = 0.3) +
     stat_summary(aes(x = group, y = probability), 
-                 fun = median, geom = "crossbar", color = "black", width = 0.4) +
+                 fun = median, geom = "crossbar", color = "black", size = 0.5, width = 0.2) +
     theme_minimal()
 
-
-# ---- Plotting: geebeeswarm ----
-#D40
-norm_prob_Δ40_FL %>%
-  filter(probability!=0) %>%
-  ggplot(aes(x = group, y = probability, color = group)) +
-    geom_beeswarm(cex = 0.1) +
-    scale_color_manual(values = c("navajowhite", "burlywood3", "lightskyblue", "#84B5FD", "navy")) +
-    scale_y_continuous(trans = pseudo_log_trans(sigma = 1e-9), 
-                       labels = label_scientific(), 
-                       breaks = c(0, 1)) +
-    theme_minimal()
-
-#D133
-norm_prob_Δ133_FL %>%
-  filter(probability!=0) %>%
-  ggplot(aes(x = group, y = probability, colour = group)) +
-  geom_quasirandom()
-    geom_beeswarm(cex = 0.1) +
-    scale_color_manual(values = c("navajowhite", "burlywood3", "lightskyblue", "#84B5FD", "navy")) +
-    scale_y_continuous(trans = pseudo_log_trans(sigma = 1e-9),
-                       labels = label_scientific(), 
-                       breaks = c(0, 1)) +
-    theme_minimal()
+ggsave("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/mmrf_norm_prob_Δ133_FL.png", 
+       norm_prob_Δ133_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 10)
 
 
 # ---- Plotting: gghalves ----
 #D40
-norm_prob_Δ40_FL %>%
-  filter(probability!=0) %>%
-  ggplot(aes(x = group, y = probability, color = group)) +
-    geom_half_violin() + 
-    geom_dotplot(binaxis = "y", method = "histodot", stackdir = "up") +
-    scale_color_manual(values = c("navajowhite", "burlywood3", "lightskyblue", "#84B5FD", "navy")) +
-    scale_y_continuous(trans = "log10") +
-    theme_minimal()
-
-#D133
-norm_prob_Δ133_FL %>%
+norm_prob_log_Δ40_FL_boxplot <- norm_prob_Δ40_FL %>%
   filter(probability!=0) %>%
   ggplot(aes(x = group, y = probability, colour = group)) +
-    geom_half_boxplot(center = TRUE, nudge = 0.01, width = 0.5) +
+    geom_half_boxplot(center = TRUE, nudge = 0.01, width = 0.3) +
     geom_half_violin(aes(fill = group), side = "r") + 
-    geom_half_dotplot(binaxis = "y", dotsize = 0.1) +
+    geom_half_dotplot(binaxis = "y", dotsize = 0.1, drop = TRUE, method = "histodot") +
+    labs(x = "", y = "log10(probability)") +
     scale_color_manual(values = c("navajowhite", "burlywood3", "lightskyblue", "#84B5FD", "navy")) +
-    scale_fill_manual(values = c("navajowhite", "burlywood3", "lightskyblue", "#84B5FD", "navy"))+
-    scale_y_continuous(trans = "log10") +
-    theme_minimal()
-    
+    scale_fill_manual(values = c("navajowhite", "burlywood3", "lightskyblue", "#84B5FD", "navy")) +
+    scale_y_continuous(trans = "log10", expand = expansion(add = 1)) + #tried trans = pseudo_log_trans(sigma = 10^(-2), base = 10)
+    theme_minimal() +
+    theme(legend.position = "bottom")
+
+ggsave("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/mmrf_norm_prob_log_Δ40_FL.png", 
+       norm_prob_log_Δ40_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 20)
+
+#D133
+norm_prob_log_Δ133_FL_boxplot <- norm_prob_Δ133_FL %>%
+  filter(probability!=0) %>%
+  ggplot(aes(x = group, y = probability, colour = group)) +
+    geom_half_boxplot(center = TRUE, nudge = 0.01, width = 0.3) +
+    geom_half_violin(aes(fill = group), side = "r") + 
+    geom_half_dotplot(binaxis = "y", binwidth = 0.25, dotsize = 0.1, drop = TRUE, method = "histodot") +
+    labs(x = "", y = "log10(probability)") +
+    scale_color_manual(values = c("navajowhite", "burlywood3", "lightskyblue", "#84B5FD", "navy")) +
+    scale_fill_manual(values = c("navajowhite", "burlywood3", "lightskyblue", "#84B5FD", "navy")) +
+    scale_y_continuous(trans = "log10", expand = expansion(add = 1)) + #tried trans = pseudo_log_trans(sigma = 10^(-2), base = 10)
+    theme_minimal() +
+    theme(legend.position = "bottom")
+
+
+ggsave("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/mmrf_norm_prob_log_Δ133_FL.png", 
+       norm_prob_log_Δ133_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 20)
 
 ### ---- WB data ----
 wb_df <- read_excel("../original_db/Tabella pz TP53 (5) - label pulite.xlsx", sheet = "Densitometry") %>%
