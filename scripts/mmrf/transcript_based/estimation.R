@@ -28,10 +28,10 @@ wd <- setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_T
 
 # loading input
 mmrf_tp53_N_per_pt <- fread("transcript_based/mmrf_tp53_per_pt.txt") %>%
-  select(p53_FL, Δ40p53α, Δ133p53α)
+  select(PUBLIC_ID, p53_FL, Δ40p53α, Δ133p53α)
 
 # ---- Computing ratio r and probability p ----
-mmrf_tp53_norm_prob_per_pt <- mmrf_tp53_N_per_pt %>%
+mmrf_tp53_prob_per_pt <- mmrf_tp53_N_per_pt %>%
   mutate(r_Δ40_FL = roundSig(Δ40p53α/p53_FL), 
          r_Δ133_FL = roundSig(Δ133p53α/p53_FL),
          P4_FL_Δ40 = roundSig(computeProb(p53_FL, 4)),
@@ -45,17 +45,17 @@ mmrf_tp53_norm_prob_per_pt <- mmrf_tp53_N_per_pt %>%
          P1_FL_Δ133 = roundSig(4 * computeProb(r_Δ133_FL, 1)), 
          P0_FL_Δ133 = roundSig(computeProb(r_Δ133_FL, 0)))
 
-write_tsv(mmrf_tp53_norm_prob_per_pt, "transcript_based/mmrf_tp53_prob_per_pt.txt")
+write_tsv(mmrf_tp53_prob_per_pt, "transcript_based/mmrf_tp53_prob_per_pt.txt")
 
 
 # ---- Plotting: ggplot2 ----
 #D40
-norm_prob_Δ40_FL <- mmrf_tp53_norm_prob_per_pt %>% 
+prob_Δ40_FL <- mmrf_tp53_prob_per_pt %>% 
   select(P4_FL_Δ40, P3_FL_Δ40, P2_FL_Δ40, P1_FL_Δ40, P0_FL_Δ40) %>%
   pivot_longer(cols = starts_with(c("P4", "P3", "P2", "P1", "P0")), names_to = "group", values_to = "probability")
-norm_prob_Δ40_FL$group <- factor(norm_prob_Δ40_FL$group, levels = unique(norm_prob_Δ40_FL$group))
+prob_Δ40_FL$group <- factor(prob_Δ40_FL$group, levels = unique(prob_Δ40_FL$group))
     
-norm_prob_Δ40_FL_boxplot <- norm_prob_Δ40_FL %>%
+prob_Δ40_FL_boxplot <- prob_Δ40_FL %>%
   filter(!is.na(probability)) %>%
   ggplot(aes(x = group, y = probability, color = group)) +
     geom_jitter(width = 0.2, height = 0, size = 2, alpha = 0.8) +
@@ -69,16 +69,16 @@ norm_prob_Δ40_FL_boxplot <- norm_prob_Δ40_FL %>%
                  fun = median, geom = "errorbar", color = "black", size = 0.5, width = 0.2) +
     theme_minimal()
 
-ggsave("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/mmrf_norm_prob_Δ40_FL.png", 
-       norm_prob_Δ40_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 10)
+ggsave("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/mmrf_prob_Δ40_FL.png", 
+       prob_Δ40_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 10)
     
 #D133
-norm_prob_Δ133_FL <- mmrf_tp53_norm_prob_per_pt %>%
+prob_Δ133_FL <- mmrf_tp53_prob_per_pt %>%
   select(P4_FL_Δ133, P3_FL_Δ133, P2_FL_Δ133, P1_FL_Δ133, P0_FL_Δ133) %>%
   pivot_longer(cols = starts_with(c("P4", "P3", "P2", "P1", "P0")), names_to = "group", values_to = "probability")
-norm_prob_Δ133_FL$group <- factor(norm_prob_Δ133_FL$group, levels = unique(norm_prob_Δ133_FL$group))
+prob_Δ133_FL$group <- factor(prob_Δ133_FL$group, levels = unique(prob_Δ133_FL$group))
 
-norm_prob_Δ133_FL_boxplot <- norm_prob_Δ133_FL %>%
+prob_Δ133_FL_boxplot <- prob_Δ133_FL %>%
   filter(!is.na(probability)) %>%
   ggplot(aes(x = group, y = probability, colour = group)) +
     geom_jitter(width = 0.2, height = 0, size = 2, alpha = 0.8) +
@@ -92,13 +92,13 @@ norm_prob_Δ133_FL_boxplot <- norm_prob_Δ133_FL %>%
                  fun = median, geom = "crossbar", color = "black", size = 0.5, width = 0.2) +
     theme_minimal()
 
-ggsave("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/mmrf_norm_prob_Δ133_FL.png", 
-       norm_prob_Δ133_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 10)
+ggsave("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/mmrf_prob_Δ133_FL.png", 
+       prob_Δ133_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 10)
 
 
 # ---- Plotting: gghalves ----
 #D40
-norm_prob_log_Δ40_FL_boxplot <- norm_prob_Δ40_FL %>%
+prob_log_Δ40_FL_boxplot <- prob_Δ40_FL %>%
   filter(probability!=0) %>%
   ggplot(aes(x = group, y = probability, colour = group)) +
     geom_half_boxplot(center = TRUE, nudge = 0.01, width = 0.3) +
@@ -112,10 +112,10 @@ norm_prob_log_Δ40_FL_boxplot <- norm_prob_Δ40_FL %>%
     theme(legend.position = "bottom")
 
 ggsave("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/mmrf_norm_prob_log_Δ40_FL.png", 
-       norm_prob_log_Δ40_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 20)
+       prob_log_Δ40_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 20)
 
 #D133
-norm_prob_log_Δ133_FL_boxplot <- norm_prob_Δ133_FL %>%
+prob_log_Δ133_FL_boxplot <- prob_Δ133_FL %>%
   filter(probability!=0) %>%
   ggplot(aes(x = group, y = probability, colour = group)) +
     geom_half_boxplot(center = TRUE, nudge = 0.01, width = 0.3) +
@@ -130,7 +130,7 @@ norm_prob_log_Δ133_FL_boxplot <- norm_prob_Δ133_FL %>%
 
 
 ggsave("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/mmrf_norm_prob_log_Δ133_FL.png", 
-       norm_prob_log_Δ133_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 20)
+       prob_log_Δ133_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 20)
 
 ### ---- WB data ----
 wb_df <- read_excel("../original_db/Tabella pz TP53 (5) - label pulite.xlsx", sheet = "Densitometry") %>%
