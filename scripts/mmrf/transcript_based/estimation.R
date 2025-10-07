@@ -28,7 +28,7 @@ wd <- setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_T
 
 # loading input
 mmrf_tp53_N_per_pt <- fread("transcript_based/mmrf_tp53_per_pt.txt") %>%
-  select(PUBLIC_ID, p53_FL, Δ40p53α, Δ133p53α)
+  select(PUBLIC_ID, p53_FL, p53_FL_exp, Δ40p53α, Δ40p53α_exp, Δ133p53α, Δ133p53α_exp)
 
 # ---- Computing ratio r and probability p ----
 mmrf_tp53_prob_per_pt <- mmrf_tp53_N_per_pt %>%
