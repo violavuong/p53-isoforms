@@ -54,6 +54,7 @@ mmrf_rt_exp_per_isoform <- cbind(mmrf_tp53_per_pt %>% select(resp_sh, matches(is
 mmrf_rt_exp_per_isoform[mmrf_rt_exp_per_isoform==""] <- NA
 
 write_tsv(mmrf_rt_exp_per_isoform, "transcript_based/mmrf_rt_exp_per_isoform.txt")
+write.xlsx(mmrf_rt_exp_per_isoform, "transcript_based/mmrf_rt_exp_per_isoform.xlsx")
 
 
 # how many pts do not have a labelled response? 43 pts - analyses will be performed on 616 pts for which a trt response was added
@@ -63,6 +64,7 @@ mmrf_rt_exp_per_isoform_per_resp <- mmrf_rt_exp_per_isoform %>% filter(!is.na(re
 mmrf_rt_exp_per_isoform_per_resp$resp_sh <- factor(mmrf_rt_exp_per_isoform_per_resp$resp_sh, levels = c("PD", "SD", "PR", "VGPR", "CR", "sCR"))
 
 write_tsv(mmrf_rt_exp_per_isoform_per_resp, "transcript_based/mmrf_rt_exp_per_isoform_per_resp.txt")
+write.xlsx(mmrf_rt_exp_per_isoform_per_resp, "transcript_based/mmrf_rt_exp_per_isoform_per_resp.xlsx")
 
 
 # ---- Frequency tbl ----
