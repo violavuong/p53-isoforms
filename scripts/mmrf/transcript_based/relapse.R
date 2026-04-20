@@ -2,8 +2,9 @@
 
 
 # file: relapse
-# aim: check for those pts that changed line (either progression or relapse). first look for transcriptome, then clinical, then genomics
-# last update: 17-04-2026
+# aim: checking, extracting those pts that changed line (either progression or relapse). first look for transcriptome, then clinical, then genomics
+# next feature to implement: meaning of progression
+# last update: 20-04-2026
 
 
 library(data.table)
@@ -13,19 +14,20 @@ library(tidyverse)
 
 # ---- Main ----
 # environment setting
-wd <- setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - mmrf/")
+wd <- setwd("C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
+mmrfDir <- "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/Bioinformatics Seràgnoli - CoMMpass_IA22_FlatFiles/"
 outDir <- "/relapse/"
 
 dir.create(paste0(wd, "/transcript_based/", outDir), recursive = TRUE)
 
 # cohort input
 mmrf_tp53_cohort <- fread("transcript_based/mmrf_tp53_per_pt.txt")
-length(mmrf_tp53_cohort$PUBLIC_ID) # there are 659 pts in total
 
+length(mmrf_tp53_cohort$PUBLIC_ID) # there are 659 pts in total
 IDs <- mmrf_tp53_cohort$PUBLIC_ID
 
 # TP53 isoforms ENSEMBL IDs
-mmrf_tp53 <- read.xlsx("mmrf_tp53.xlsx", sheet = "isoforms")
+tp53_isoforms <- read.xlsx("mmrf_tp53.xlsx", sheet = "isoforms")
 
 
 # ---- Transcript-based ----
@@ -35,7 +37,7 @@ mmrf_cpm <- fread("transcript_based/mmrf_cpm.txt")
 # which ID have more than 1 line?
 mmrf_tp53_cpm_lines <- mmrf_cpm %>% 
   select(transcript, starts_with(IDs)) %>%
-  filter(transcript %in% mmrf_tp53$`ENSEMBL.mRNA`)
+  filter(transcript %in% tp53_isoforms$`ENSEMBL.mRNA`)
 
 # separating lines
 first_line <- grep("_1_BM_CD138pos", colnames(mmrf_tp53_cpm_lines), value = TRUE)
@@ -58,7 +60,9 @@ write_tsv(mmrf_tp53_cpm_relapsed, paste0(wd, "/transcript_based/", outDir, "mmrf
 
 
 # ---- Clinical-based ----
-mmrfDir <- "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/Alma Mater Studiorum Università di Bologna/Bioinformatics Seràgnoli - CoMMpass_IA22_FlatFiles/"
+# demographic data 
+md_pt <- fread(paste0(mmrfDir, "MMRF_CoMMpass_IA22_PER_PATIENT.tsv")) %>%
+  select(PUBLIC_ID, D_PT_age, D_PT_gender, D_PT_iss)
 
 # biochemical data of pts collected during visits
 md_visit <- fread(paste0(mmrfDir, "MMRF_CoMMpass_IA22_PER_PATIENT_VISIT.tsv")) %>%
@@ -112,10 +116,6 @@ md_surv <- fread(paste0(mmrfDir, "MMRF_CoMMpass_IA22_STAND_ALONE_SURVIVAL.tsv"))
   mutate(SPECTRUM_SEQ = paste0(PUBLIC_ID, "_", line)) %>%
   select(PUBLIC_ID, SPECTRUM_SEQ, start_dy, end_dy, best_respdy, PFS_dy, PFS_event, PFS_time, OS_date, OS_event, OS_time, deathdy, lstalive, lvisitdy, lastdy)
 
-# demographic data 
-md_pt <- fread(paste0(mmrfDir, "MMRF_CoMMpass_IA22_PER_PATIENT.tsv")) %>%
-  select(PUBLIC_ID, D_PT_age, D_PT_gender, D_PT_iss)
-
 
 # ---- Merging ----
 mmrf_tp53_relapsed_per_pt <- left_join(mmrf_tp53_cpm_relapsed, md_pt, by = "PUBLIC_ID") %>%
@@ -131,7 +131,15 @@ write_tsv(mmrf_tp53_relapsed_per_pt, paste0(wd, "/transcript_based/", outDir, "m
 # ---- Summarizing relapsed pts ----
 # summarizing relapsed pts
 relapsed_pts <- mmrf_tp53_relapsed_per_pt %>%
-  distinct(PUBLIC_ID, line) %>%
-  mutate(present = 1) %>%
-  pivot_wider(names_from = line, values_from = present)
-
+  group_by(PUBLIC_ID) %>%
+  summarise(line_2 = as.integer(any(line==2, na.rm = TRUE)),
+            line_3 = as.integer(any(line==3, na.rm = TRUE)),
+            line_4 = as.integer(any(line==4, na.rm = TRUE)),
+            line_5 = as.integer(any(line==5, na.rm = TRUE))) %>%
+  arrange(desc(line_2), desc(line_3), desc(line_4), desc(line_5))
+            #per_pt = as.integer(any(!is.na(D_PT_age), na.rm = TRUE)), 
+            #per_visit = as.integer(any(!is.na(D_LAB_chem_albumin), na.rm = TRUE)), 
+            #per_trt = as.integer(any(!is.na(therstdy), na.rm = TRUE)),
+            #per_trt_reg = as.integer(any(!is.na(MMTX_ISTHISLINEOFT), na.rm = TRUE)),
+            #per_surv = as.integer(any(!is.na(lstalive), na.rm = TRUE))) %>%
+  ungroup()
