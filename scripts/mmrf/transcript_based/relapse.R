@@ -4,7 +4,7 @@
 # file: relapse
 # aim: checking, extracting those pts that changed line (either progression or relapse). first look for transcriptome, then clinical, then genomics
 # next feature to implement: meaning of progression
-# last update: 20-04-2026
+# last update: 24-04-2026
 
 
 library(data.table)
@@ -125,11 +125,9 @@ mmrf_tp53_relapsed_per_pt <- left_join(mmrf_tp53_cpm_relapsed, md_pt, by = "PUBL
   left_join(md_surv, by = c("PUBLIC_ID", "SPECTRUM_SEQ")) %>%
   relocate(starts_with("ENST"), .after = lastdy)
 
-write_tsv(mmrf_tp53_relapsed_per_pt, paste0(wd, "/transcript_based/", outDir, "mmrf_tp53_relapsed_per_pt_line.txt"))
-
 
 # ---- Summarizing relapsed pts ----
-# summarizing relapsed pts
+# summarizing relapsed pts - keeping just line 2, and all line of MMRF_1790 for case report study
 relapsed_pts <- mmrf_tp53_relapsed_per_pt %>%
   group_by(PUBLIC_ID) %>%
   summarise(line_2 = as.integer(any(line==2, na.rm = TRUE)),
@@ -137,9 +135,10 @@ relapsed_pts <- mmrf_tp53_relapsed_per_pt %>%
             line_4 = as.integer(any(line==4, na.rm = TRUE)),
             line_5 = as.integer(any(line==5, na.rm = TRUE))) %>%
   arrange(desc(line_2), desc(line_3), desc(line_4), desc(line_5))
-            #per_pt = as.integer(any(!is.na(D_PT_age), na.rm = TRUE)), 
-            #per_visit = as.integer(any(!is.na(D_LAB_chem_albumin), na.rm = TRUE)), 
-            #per_trt = as.integer(any(!is.na(therstdy), na.rm = TRUE)),
-            #per_trt_reg = as.integer(any(!is.na(MMTX_ISTHISLINEOFT), na.rm = TRUE)),
-            #per_surv = as.integer(any(!is.na(lstalive), na.rm = TRUE))) %>%
-  ungroup()
+
+# filtering pts by having just line 2, and keep also MMRF_1790 for case report
+mmrf_tp53_R_per_pt <- mmrf_tp53_relapsed_per_pt %>%
+  filter(line==2 | PUBLIC_ID=="MMRF_1790")
+
+write_tsv(mmrf_tp53_R_per_pt, paste0(wd, "/transcript_based/", outDir, "mmrf_tp53_R_per_pt_line.txt"))
+
