@@ -1,7 +1,7 @@
 # !/usr/bin/r
 
 ## file: ratios.R
-## last update: 09-09-2025
+## last update: 24-07-2026
 
 library(crosstable)
 library(data.table)
@@ -11,12 +11,12 @@ library(RColorBrewer)
 library(openxlsx)
 library(tidyverse)
 
-source("C:/Users/Dell/Desktop/git_projects/TP53/scripts/fun/utils.R")
+source("C:/Users/violameixian.vuong2/Desktop/git-projects/p53-isoforms/scripts/fun/utils.R")
 
 
 # ---- Main ----
 # setting the env
-wd <- setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
+wd <- setwd("C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
 outDir <- "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/"
 
 # loading input
@@ -26,84 +26,127 @@ mmrf_tp53_per_pt <- fread("transcript_based/mmrf_tp53_per_pt.txt")
 # ---- Data manipulation ----
 # selecting isoforms exp
 isoforms <- c("p53_FL$", "p53β$", "p53γ$", "Δ40p53α$", "Δ133p53α$", "Δ133p53β$", "Δ133p53γ$")
-mmrf_exp_per_isoform <- mmrf_tp53_per_pt %>% select(matches(isoforms))
-mmrf_exp_per_isoform <- mmrf_exp_per_isoform + 1 #adding pseudocounts
+mmrf_exp_per_isoform <- mmrf_tp53_per_pt %>% select(PUBLIC_ID, matches(isoforms))
 
 # computing ratio
 mmrf_rt_per_isoform <- mmrf_exp_per_isoform %>%
-  mutate(across(!p53_FL, ~ ./p53_FL)) %>%
-  select(-p53_FL) %>%
-  rename_with(~c("rt_p53β_FL", "rt_p53γ_FL", "rt_Δ40p53α_FL", "rt_Δ133p53α_FL", "rt_Δ133p53β_FL", "rt_Δ133p53γ_FL"), c(1,2,3,4,5,6))
+  mutate(across(!c(PUBLIC_ID, p53_FL), .fns = ~ ./p53_FL, .names = "{.col}_FL_rt")) 
 
-# computing cut-off value
-rt_cut_offs <- unname(defineTh(as.data.frame(t(mmrf_rt_per_isoform)), "median"))
+
+# ---- Beta vs FL ----
+# 626 pts (40 without respsh)
+mmrf_rt_beta_FL <- mmrf_rt_per_isoform %>%
+  select(PUBLIC_ID, p53_FL, p53β, p53β_FL_rt) %>%
+  filter(p53_FL!=0, p53β!=0)
+
+beta_FL_th <- unname(defineTh(as.data.frame(t(mmrf_rt_beta_FL[, -1])), "median"))[3]
 
 # applying cut-off
-mmrf_tmp_rt_exp_per_isoform <- mmrf_rt_per_isoform %>%
-  mutate(rt_p53β_FL_exp = ifelse(rt_p53β_FL > rt_cut_offs[1], "high_ratio", "low_ratio"), 
-         rt_p53γ_FL_exp = ifelse(rt_p53γ_FL > rt_cut_offs[2], "high_ratio", "low_ratio"),
-         rt_Δ40p53α_FL_exp = ifelse(rt_Δ40p53α_FL > rt_cut_offs[3], "high_ratio", "low_ratio"),
-         rt_Δ133p53α_FL_exp = ifelse(rt_Δ133p53α_FL > rt_cut_offs[4], "high_ratio", "low_ratio"),
-         rt_Δ133p53β_FL_exp = ifelse(rt_Δ133p53β_FL > rt_cut_offs[5], "high_ratio", "low_ratio"),
-         rt_Δ133p53γ_FL_exp = ifelse(rt_Δ133p53γ_FL > rt_cut_offs[6], "high_ratio", "low_ratio"))
+mmrf_rt_beta_FL_per_isoform <- mmrf_rt_beta_FL %>%
+  mutate(rt_p53β_FL_exp = ifelse(p53β_FL_rt > beta_FL_th, "high_ratio", "low_ratio")) %>%
+  left_join(mmrf_tp53_per_pt %>% select(PUBLIC_ID, resp_sh, p53_FL_exp, p53β_exp), by = "PUBLIC_ID")
+mmrf_rt_beta_FL_per_isoform$resp_sh <- factor(mmrf_rt_beta_FL_per_isoform$resp_sh, levels = c("PD", "SD", "PR", "VGPR", "CR", "sCR"))
 
-# binding
-isoforms_exp <- c("p53_FL_exp", "p53β_exp", "p53γ_exp", "Δ40p53α_exp", "Δ133p53α_exp", "Δ133p53β_exp", "Δ133p53γ_exp")
-mmrf_rt_exp_per_isoform <- cbind(mmrf_tp53_per_pt %>% select(resp_sh, matches(isoforms_exp)), 
-                                 mmrf_tmp_rt_exp_per_isoform %>% select(ends_with("exp"))) 
-mmrf_rt_exp_per_isoform[mmrf_rt_exp_per_isoform==""] <- NA
+p53β_tbl <- as_flextable(crosstable(mmrf_rt_beta_FL_per_isoform %>% 
+                                      filter(resp_sh!="") %>% 
+                                      select(resp_sh, p53β_exp, rt_p53β_FL_exp), 
+                                    by = c(rt_p53β_FL_exp, p53β_exp), label = FALSE, total = TRUE))
 
-write_tsv(mmrf_rt_exp_per_isoform, "transcript_based/mmrf_rt_exp_per_isoform.txt")
-write.xlsx(mmrf_rt_exp_per_isoform, "transcript_based/mmrf_rt_exp_per_isoform.xlsx")
+write.xlsx(mmrf_rt_beta_FL_per_isoform, "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/ratios_240726/mmrf_rt_beta_FL_per_pt.xlsx")
 
 
-# how many pts do not have a labelled response? 43 pts - analyses will be performed on 616 pts for which a trt response was added
-mmrf_non_responders <- mmrf_rt_exp_per_isoform %>% filter(is.na(resp_sh))
+# ---- Gamma vs FL ----
+# 181 pts (14 of which do not have resp_sh)
+mmrf_rt_gamma_FL <- mmrf_rt_per_isoform %>%
+  select(PUBLIC_ID, p53_FL, p53γ, p53γ_FL_rt) %>%
+  filter(p53_FL!=0, p53γ!=0)
 
-mmrf_rt_exp_per_isoform_per_resp <- mmrf_rt_exp_per_isoform %>% filter(!is.na(resp_sh))
-mmrf_rt_exp_per_isoform_per_resp$resp_sh <- factor(mmrf_rt_exp_per_isoform_per_resp$resp_sh, levels = c("PD", "SD", "PR", "VGPR", "CR", "sCR"))
+gamma_FL_th <- unname(defineTh(as.data.frame(t(mmrf_rt_gamma_FL[, -1])), "median"))[3]
 
-write_tsv(mmrf_rt_exp_per_isoform_per_resp, "transcript_based/mmrf_rt_exp_per_isoform_per_resp.txt")
-write.xlsx(mmrf_rt_exp_per_isoform_per_resp, "transcript_based/mmrf_rt_exp_per_isoform_per_resp.xlsx")
+# applying cut-off
+mmrf_rt_gamma_FL_per_isoform <- mmrf_rt_gamma_FL %>%
+  mutate(rt_p53γ_FL_exp = ifelse(p53γ_FL_rt > gamma_FL_th, "high_ratio", "low_ratio")) %>%
+  left_join(mmrf_tp53_per_pt %>% select(PUBLIC_ID, resp_sh, p53_FL_exp, p53γ_exp), by = "PUBLIC_ID")
+mmrf_rt_gamma_FL_per_isoform$resp_sh <- factor(mmrf_rt_gamma_FL_per_isoform$resp_sh, levels = c("PD", "SD", "PR", "VGPR", "CR", "sCR"))
 
+p53γ_tbl <- as_flextable(crosstable(mmrf_rt_gamma_FL_per_isoform %>% 
+                                      filter(resp_sh!="") %>% 
+                                      select(resp_sh, p53γ_exp, rt_p53γ_FL_exp), 
+                                    by = c(rt_p53γ_FL_exp, p53γ_exp), label = FALSE, total = TRUE))
 
-# ---- Frequency tbl ----
-# p53β
-p53β_df <- mmrf_rt_exp_per_isoform_per_resp %>% select(resp_sh, p53β_exp, rt_p53β_FL_exp)
-p53β_tbl <- crosstable(p53β_df, by = c(rt_p53β_FL_exp, p53β_exp), label = FALSE, total = TRUE)
-write.xlsx(p53β_tbl, "C:/Users/Dell/Desktop/beta.xlsx")
-
-# p53γ
-p53γ_df <- mmrf_rt_exp_per_isoform_per_resp %>% select(resp_sh, p53γ_exp, rt_p53γ_FL_exp)
-p53γ_tbl <- crosstable(p53γ_df, by = c(rt_p53γ_FL_exp, p53γ_exp), label = FALSE, total = TRUE)
-write.xlsx(p53γ_tbl, "C:/Users/Dell/Desktop/gamma.xlsx")
-
-# Δ40p53α
-Δ40p53α_df <- mmrf_rt_exp_per_isoform_per_resp %>% select(resp_sh, Δ40p53α_exp, rt_Δ40p53α_FL_exp)
-Δ40p53α_tbl <- crosstable(Δ40p53α_df, by = c(rt_Δ40p53α_FL_exp, Δ40p53α_exp), label = FALSE, total = TRUE)
-write.xlsx(Δ40p53α_tbl, "C:/Users/Dell/Desktop/delta40.xlsx")
-
-# Δ133p53α
-Δ133p53α_df <- mmrf_rt_exp_per_isoform_per_resp %>% select(resp_sh, Δ133p53α_exp, rt_Δ133p53α_FL_exp)
-Δ133p53α_tbl <- crosstable(Δ133p53α_df, by = c(rt_Δ133p53α_FL_exp, Δ133p53α_exp), label = FALSE, total = TRUE)
-write.xlsx(Δ133p53α_tbl, "C:/Users/Dell/Desktop/delta133alpha.xlsx")
-
-# Δ133p53β
-Δ133p53β_df <- mmrf_rt_exp_per_isoform_per_resp %>% select(resp_sh, Δ133p53β_exp, rt_Δ133p53β_FL_exp)
-Δ133p53β_tbl <- crosstable(Δ133p53β_df, by = c(rt_Δ133p53β_FL_exp, Δ133p53β_exp), label = FALSE, total = TRUE)
-write.xlsx(Δ133p53β_tbl, "C:/Users/Dell/Desktop/delta133beta.xlsx")
+write.xlsx(mmrf_rt_gamma_FL_per_isoform, "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/ratios_240726/mmrf_rt_gamma_FL_per_pt.xlsx")
 
 
-# Δ133p53γ
-Δ133p53γ_df <- mmrf_rt_exp_per_isoform_per_resp %>% select(resp_sh, Δ133p53γ_exp, rt_Δ133p53γ_FL_exp)
-Δ133p53γ_tbl <- crosstable(Δ133p53γ_df, by = c(rt_Δ133p53γ_FL_exp, Δ133p53γ_exp), label = FALSE, total = TRUE)
-write.xlsx(Δ133p53γ_tbl, "C:/Users/Dell/Desktop/delta133gamma.xlsx")
+# ---- Delta40 vs FL ----
+# 9 pts (1 of which does not have resp_sh)
+mmrf_rt_delta40_FL <- mmrf_rt_per_isoform %>%
+  select(PUBLIC_ID, p53_FL, Δ40p53α, Δ40p53α_FL_rt) %>%
+  filter(p53_FL!=0, Δ40p53α!=0)
+
+delta40_FL_th <- unname(defineTh(as.data.frame(t(mmrf_rt_delta40_FL[, -1])), "median"))[3]
+
+# applying cut-off
+mmrf_rt_delta40_FL_per_isoform <- mmrf_rt_delta40_FL %>%
+  mutate(rt_Δ40_FL_exp = ifelse(Δ40p53α_FL_rt > delta40_FL_th, "high_ratio", "low_ratio")) %>%
+  left_join(mmrf_tp53_per_pt %>% select(PUBLIC_ID, resp_sh, p53_FL_exp, Δ40p53α_exp), by = "PUBLIC_ID")
+mmrf_rt_delta40_FL_per_isoform$resp_sh <- factor(mmrf_rt_delta40_FL_per_isoform$resp_sh, levels = c("SD", "PR", "VGPR", "CR"))
+
+p53Δ40_tbl <- as_flextable(crosstable(mmrf_rt_delta40_FL_per_isoform %>% 
+                                      filter(resp_sh!="") %>% 
+                                      select(resp_sh, Δ40p53α_exp, rt_Δ40_FL_exp), 
+                                    by = c(rt_Δ40_FL_exp, Δ40p53α_exp), label = FALSE, total = TRUE))
+
+write.xlsx(mmrf_rt_delta40_FL_per_isoform, "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/ratios_240726/mmrf_rt_delta40_FL_per_pt.xlsx")
 
 
+# ---- Delta133a vs FL ----
+# 509 pts (31 of which do not have resp_sh)
+mmrf_rt_delta133a_FL <- mmrf_rt_per_isoform %>%
+  select(PUBLIC_ID, p53_FL, Δ133p53α, Δ133p53α_FL_rt) %>%
+  filter(p53_FL!=0, Δ133p53α!=0)
 
-save_as_html("p53β" = p53β_tbl, "p53γ" = p53γ_tbl, "Δ40p53α" = Δ40p53α_tbl, 
-             "Δ133p53α" = Δ133p53α_tbl, "Δ133p53β" = Δ133p53β_tbl, "Δ133p53γ" = Δ133p53γ_tbl, 
-             path = "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/exp_rt_frequency_tbl.html")
+delta133a_FL_th <- unname(defineTh(as.data.frame(t(mmrf_rt_delta133a_FL[, -1])), "median"))[3]
+
+# applying cut-off
+mmrf_rt_delta133a_FL_per_isoform <- mmrf_rt_delta133a_FL %>%
+  mutate(rt_Δ133a_FL_exp = ifelse(Δ133p53α_FL_rt > delta133a_FL_th, "high_ratio", "low_ratio")) %>%
+  left_join(mmrf_tp53_per_pt %>% select(PUBLIC_ID, resp_sh, p53_FL_exp, Δ133p53α_exp), by = "PUBLIC_ID")
+mmrf_rt_delta133a_FL_per_isoform$resp_sh <- factor(mmrf_rt_delta133a_FL_per_isoform$resp_sh, levels = c("PD", "SD", "PR", "VGPR", "CR", "sCR"))
+
+p53Δ133a_tbl <- as_flextable(crosstable(mmrf_rt_delta133a_FL_per_isoform %>% 
+                                        filter(resp_sh!="") %>% 
+                                        select(resp_sh, Δ133p53α_exp, rt_Δ133a_FL_exp), 
+                                      by = c(rt_Δ133a_FL_exp, Δ133p53α_exp), label = FALSE, total = TRUE))
+
+write.xlsx(mmrf_rt_delta133a_FL_per_isoform, "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/ratios_240726/mmrf_rt_delta133a_FL_per_pt.xlsx")
+
+
+# ---- Delta133b vs FL ----
+# 11 pts
+mmrf_rt_delta133b_FL <- mmrf_rt_per_isoform %>%
+  select(PUBLIC_ID, p53_FL, Δ133p53β, Δ133p53β_FL_rt) %>%
+  filter(p53_FL!=0, Δ133p53β!=0)
+
+delta133b_FL_th <- unname(defineTh(as.data.frame(t(mmrf_rt_delta133b_FL[, -1])), "median"))[3]
+
+# applying cut-off
+mmrf_rt_delta133b_FL_per_isoform <- mmrf_rt_delta133b_FL %>%
+  mutate(rt_Δ133b_FL_exp = ifelse(Δ133p53β_FL_rt > delta133b_FL_th, "high_ratio", "low_ratio")) %>%
+  left_join(mmrf_tp53_per_pt %>% select(PUBLIC_ID, resp_sh, p53_FL_exp, Δ133p53β_exp), by = "PUBLIC_ID")
+mmrf_rt_delta133b_FL_per_isoform$resp_sh <- factor(mmrf_rt_delta133b_FL_per_isoform$resp_sh, levels = c("SD", "PR", "VGPR", "CR"))
+
+p53Δ133b_tbl <- as_flextable(crosstable(mmrf_rt_delta133b_FL_per_isoform %>% 
+                                          filter(resp_sh!="") %>% 
+                                          select(resp_sh, Δ133p53β_exp, rt_Δ133b_FL_exp), 
+                                        by = c(rt_Δ133b_FL_exp, Δ133p53β_exp), label = FALSE, total = TRUE))
+
+write.xlsx(mmrf_rt_delta133b_FL_per_isoform, "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/ratios_240726/mmrf_rt_delta133b_FL_per_pt.xlsx")
+
+
+# ---- Saving all tbl ----
+save_as_html("p53β" = p53β_tbl, "p53γ" = p53γ_tbl, "Δ40p53α" = p53Δ40_tbl, 
+             "Δ133p53α" = p53Δ133a_tbl, "Δ133p53β" = p53Δ133b_tbl,
+             path = "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/ratios_240726/exp_rt_frequency_tbl_240726.html")
 
 
 # ---- Plotting: exp over ratio ----
