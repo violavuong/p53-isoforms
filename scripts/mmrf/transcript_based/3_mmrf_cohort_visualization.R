@@ -1,7 +1,10 @@
 #!/usr/bin/r
 
-## file: visualization.R
-## last update: 22-07-2025
+
+# file: 3_mmrf_cohort_visualization
+# aim: plotting definite mmrf cohort, testing different categorization cut-offs (median, 75 percentile, 95 percentile)
+# last update: 06-08-2026
+
 
 # ---- Main ----
 library(ComplexHeatmap)
@@ -15,15 +18,13 @@ library(readxl)
 library(reshape2)
 library(tidyverse)
 
-
-wd <- "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/MM group - Vuong_Viola_Meixian/TP53/"
-setwd(wd)
-
-source("C:/Users/Dell/Desktop/git_projects/TP53/scripts/fun/utils.R")
+source("C:/Users/violameixian.vuong2/Desktop/git-projects/p53-isoforms/scripts/fun/utils.R")
 
 # global input
-mmrf_tp53_per_pt <- fread("mmrf_tp53_per_pt.txt")
-mmrf_tp53_ann <- read_xlsx("mmrf_tp53.xlsx", sheet = "annotation")
+wd <- setwd("C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/")
+
+mmrf_tp53_per_pt <- fread(paste0(wd, "/data/mmrf/transcript_based/mmrf_tp53_per_pt.txt"))
+mmrf_tp53_ann <- read_xlsx(paste0(wd, "/data/mmrf/mmrf_tp53.xlsx"), sheet = "annotation")
 
 
 # ---- cohort plot ----
@@ -186,7 +187,7 @@ freq_median <- freqBarplot(mmrf_tp53_median_class, "transcript") +
 group_median <- freqBarplot(mmrf_tp53_median_groups, "group") +
   labs(title = "Frequency per isoform group - median cut-off", x = "group", y = "count", fill = "presence/absence")
 
-ggsave("mmrf_tp53_frequency_group_barplot.png", group_median, height = 10, width = 18, dpi = 400, bg = "white")
+ggsave(paste0(wd, "output/plots/mmrf_tp53_frequency_group_barplot.png"), group_median, height = 10, width = 18, dpi = 400, bg = "white")
 
 
 ## 75th percentile
@@ -201,7 +202,7 @@ freq_75perc <- freqBarplot(mmrf_tp53_75perc_class, "transcript") +
 group_75perc <- freqBarplot(mmrf_tp53_75perc_groups, "group") +
   labs(title = "Frequency per isoform group - 75th cut-off", x = "group", y = "count", fill = "presence/absence")
 
-ggsave("mmrf_tp53_frequency_barplot.png", 
+ggsave(paste0(wd, "output/plots/mmrf_tp53_frequency_barplot.png"), 
        wrap_plots(freq_median, freq_75perc, group_median, group_75perc, nrow = 2) + plot_layout(guides = "collect"), 
        height = 10, width = 18, dpi = 400, bg = "white")
 
@@ -235,7 +236,7 @@ mmrf_tp53_ann_fig <- mmrf_tp53_ann %>%
   theme() +
   theme_minimal()
 
-ggsave("tp53_isoforms_transcripts.png", mmrf_tp53_ann_fig, height = 10, width = 18, dpi = 400, bg = "white")
+ggsave(paste0(wd, "output/plots/tp53_isoforms_transcripts.png"), mmrf_tp53_ann_fig, height = 10, width = 18, dpi = 400, bg = "white")
 
 
 ## relative abundance
@@ -259,8 +260,6 @@ melt(mmrf_l2_tp53 %>% mutate(transcript = colnames(mmrf_tp53_per_pt)[2:7])) %>%
   coord_flip() +
   labs(title = "Boxplot per isoform", x = "isoform", y = "log2(CPM + 1)", fill = "isoform") +
   theme_minimal()
-
-
 
 
 ## gene transcripts genomic plots wrt tp53a

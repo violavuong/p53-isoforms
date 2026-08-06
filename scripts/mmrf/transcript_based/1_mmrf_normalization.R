@@ -1,7 +1,8 @@
 #!/usr/bin/r
 
-## file: normalization.R
-## last update: 08-07-2025
+# file: 1_mmrf_normalization
+# aim: investigating mmrf transcript-based data, normalizing and merging clinical data
+# last update: 06-08-2026
 
 # installing RNA-seq libraries
 if (!require("BiocManager", quietly = TRUE)){
@@ -18,8 +19,8 @@ library(SummarizedExperiment)
 library(tidyverse)
 
 
-pathDir <- "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/Bioinformatics Seràgnoli - IA22/"
-setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
+pathDir <- "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/Bioinformatics Seràgnoli - IA22/"
+wd <- setwd("C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
 
 # mmrf input data - normalized transcript-per-million
 mmrf_tpm <- fread(paste0(pathDir, "expression_estimates_transcript_based/MMRF_CoMMpass_IA22_salmon_transcriptUnstrandedIgFiltered_tpm.tsv"))
@@ -109,7 +110,7 @@ mmrf_cln <- left_join(mmrf_pt, mmrf_visit, by = "PUBLIC_ID") %>%
   left_join(mmrf_reg, by = "PUBLIC_ID") %>%
   left_join(mmrf_surv, by = "PUBLIC_ID")
 
-write_tsv(mmrf_cln, "clinical_data/mmrf_cln.txt")
+write_tsv(mmrf_cln, paste0(wd, "clinical_data/mmrf_cln.txt"))
 
 
 # ---- MMRF data normalization ----
@@ -120,13 +121,13 @@ mmrf_tmm <- calcNormFactors(mmrf_gse, method = "TMM")
 mmrf_cpm <- cpm(mmrf_tmm)
 colnames(mmrf_cpm) <- colnames(mmrf_tpm[, -1])
 mmrf_cpm <- as.data.frame(mmrf_cpm) %>% mutate(transcript = mmrf_tpm$Transcript)
-write_tsv(mmrf_cpm, "mmrf_cpm.txt")
+write_tsv(mmrf_cpm, paste0(wd, "transcript_based/counts_per_million/mmrf_cpm.txt"))
 
 # counts-per-million in logarithmic scale (normalization by sample)
 mmrf_lcpm <- cpm(mmrf_tmm, log = TRUE)
 colnames(mmrf_lcpm) <- colnames(mmrf_tpm[, -1])
 mmrf_lcpm <- as.data.frame(mmrf_lcpm) %>% mutate(transcript = mmrf_tpm$Transcript)
-write_tsv(mmrf_lcpm, "mmrf_lcpm.txt")
+write_tsv(mmrf_lcpm, paste0(wd, "transcript_based/counts_per_million/mmrf_lcpm.txt"))
 
 
 # ---- MMRF data filtering ----
@@ -135,13 +136,13 @@ mmrf_cpm_per_pt_tmp <- filterMMRF(mmrf_cpm, mmrf_cln)
 mmrf_cpm_per_pt <- mmrf_cpm_per_pt_tmp %>%
   select(order(colnames(mmrf_cpm_per_pt_tmp))) %>%
   mutate(transcript = mmrf_tpm$Transcript, .before = MMRF_1021)
-write_tsv(mmrf_cpm_per_pt, "mmrf_cpm_per_pt.txt")
+write_tsv(mmrf_cpm_per_pt, paste0(wd, "transcript_based/counts_per_million/mmrf_cpm_per_pt.txt"))
 
 mmrf_lcpm_per_pt_tmp <- filterMMRF(mmrf_lcpm, mmrf_cln) 
 mmrf_lcpm_per_pt <- mmrf_lcpm_per_pt_tmp %>%
   select(order(colnames(mmrf_lcpm_per_pt_tmp))) %>%
   mutate(transcript = mmrf_tpm$Transcript, .before = MMRF_1021)
-write_tsv(mmrf_lcpm_per_pt, "mmrf_lcpm_per_pt.txt")
+write_tsv(mmrf_lcpm_per_pt, paste0(wd, "transcript_based/counts_per_million/mmrf_lcpm_per_pt.txt"))
 
 
 # ---- MMRF clinical data filtering ----
@@ -156,17 +157,17 @@ mmrf_cln_per_pt <- mmrf_cln %>%
               c(2:19)) %>%
   arrange(PUBLIC_ID)
 
-write_tsv(mmrf_cln_per_pt, "clinical_data/mmrf_cln_per_pt.txt")
+write_tsv(mmrf_cln_per_pt, paste0(wd, "clinical_data/mmrf_cln_per_pt.txt"))
 
 
 # update: harmonizing every data: pts with clinical, genomic and transcriptomic data: 659 pts
-mmrf_cln_per_pt <- fread("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/clinical_data/mmrf_cln_per_pt.txt")
-mmrf_cpm_per_pt <- fread("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/transcript_based/mmrf_cpm_per_pt.txt")
-mmrf_lcpm_per_pt <- fread("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/transcript_based/mmrf_lcpm_per_pt.txt")
+mmrf_cln_per_pt <- fread(paste0(wd, "clinical_data/mmrf_cln_per_pt.txt"))
+mmrf_cpm_per_pt <- fread(paste0(wd, "transcript_based/counts_per_million/mmrf_cpm_per_pt.txt"))
+mmrf_lcpm_per_pt <- fread(paste0(wd, "transcript_based/counts_per_million/mmrf_lcpm_per_pt.txt"))
 
 mmrf_cpm_per_pt <- mmrf_cpm_per_pt %>% select(transcript, matches(mmrf_cln_per_pt$PUBLIC_ID))
-write_tsv(mmrf_cpm_per_pt, "../transcript_based/mmrf_cpm_per_pt.txt")
+write_tsv(mmrf_cpm_per_pt, paste0(wd, "transcript_based/counts_per_million/mmrf_cpm_per_pt.txt"))
 
 mmrf_lcpm_per_pt <- mmrf_lcpm_per_pt %>% select(transcript, matches(mmrf_cln_per_pt$PUBLIC_ID))
-write_tsv(mmrf_lcpm_per_pt, "../transcript_based/mmrf_lcpm_per_pt.txt")
+write_tsv(mmrf_lcpm_per_pt, paste0(wd, "transcript_based/counts_per_million/mmrf_lcpm_per_pt.txt"))
 

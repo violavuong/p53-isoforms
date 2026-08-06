@@ -1,7 +1,8 @@
 #!/usr/bin/r
 
-## file: exploration.R
-## last update: 23-07-2025
+# file: 2_mmrf_cohort_definition
+# aim: exploraring data and define final cohort for downstream analyses (only pts with transcript, genomic, clinical data are considered)
+# last update: 06-08-2026
 
 # installing required packages
 install.packages(c("ggridges", "gtsummary"))
@@ -16,12 +17,12 @@ library(readxl)
 library(scales)
 library(tidyverse)
 
-wd <- setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
+wd <- setwd("C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/")
 
 # inputs
-mmrf_cln_per_pt <- fread(paste0(wd, "/clinical_data/mmrf_cln_per_pt.txt"))
-mmrf_cpm_per_pt <- fread(paste0(wd, "/transcript_based/mmrf_cpm_per_pt.txt"))
-mmrf_tp53 <- read_excel("mmrf_tp53.xlsx", sheet = "isoforms")
+mmrf_cln_per_pt <- fread(paste0(wd, "/data/mmrf/clinical_data/mmrf_cln_per_pt.txt"))
+mmrf_cpm_per_pt <- fread(paste0(wd, "/data/mmrf/transcript_based/counts_per_million/mmrf_cpm_per_pt.txt"))
+mmrf_tp53 <- read_excel("data/mmrf/mmrf_tp53.xlsx", sheet = "isoforms")
 
 
 # ---- filtering ----
@@ -30,7 +31,8 @@ mmrf_tmp_tp53_cpm_per_pt <- mmrf_cpm_per_pt %>%
   filter(transcript %in% mmrf_tp53$`ENSEMBL mRNA`)
 
 ## transposing the data
-mmrf_tp53_cpm_per_pt <- as.data.frame(t(mmrf_tmp_tp53_cpm_per_pt %>% column_to_rownames(var = "transcript")))
+mmrf_tp53_cpm_per_pt <- as.data.frame(t(mmrf_tmp_tp53_cpm_per_pt %>% 
+                                          column_to_rownames(var = "transcript")))
 
 
 # ---- exploration ----
@@ -46,7 +48,7 @@ mmrf_tp53_cpm_per_pt %>%
     theme(plot.title = element_text(hjust = 0.5), 
           strip.text = element_text(face = "bold"))
 
-ggsave("mmrf_tp53_cpm_histogram.png", p, height = 10, width = 15, dpi = 400, bg = "white")
+ggsave(paste0(wd, "output/plots/mmrf_tp53_cpm_histogram.png"), p, height = 10, width = 15, dpi = 400, bg = "white")
 
 ## boxplots
 mmrf_tp53_cpm_per_pt %>%
@@ -60,7 +62,7 @@ mmrf_tp53_cpm_per_pt %>%
           legend.position = "none",
           plot.title = element_text(hjust = 0.5))
 
-ggsave("mmrf_tp53_cpm_boxplot.png", p, height = 8, width = 15, dpi = 400, bg = "white")
+ggsave(paste0(wd, "output/plots/mmrf_tp53_cpm_boxplot.png"), p, height = 8, width = 15, dpi = 400, bg = "white")
 
 
 ## Q-Q plots
@@ -68,17 +70,18 @@ qq_plots <- lapply(colnames(mmrf_tp53_cpm_per_pt), function(x) createQQPlot(mmrf
 wrap_plots(qq_plots) +
   plot_annotation(title = "QQ-plots for normal distribution")
 
-ggsave("mmrf_tp53_cpm_qq.png", p, height = 10, width = 15, dpi = 400, bg = "white")
+ggsave(paste0(wd, "output/plots/mmrf_tp53_cpm_qq.png"), p, height = 10, width = 15, dpi = 400, bg = "white")
 
 
 ## descriptive exploration
-sink("mmrf_tp53_cpm_per_pt_summary.txt")
+sink(paste0(wd, "output/mmrf_tp53_cpm_per_pt_summary.txt"))
 print(summary(mmrf_tp53_cpm_per_pt))
 sink() 
 
-
+    
 # ---- categorization ----
-median_per_tp53 <- mmrf_tp53_cpm_per_pt %>% summarise(across(everything(), ~median(.[. > 0])))
+median_per_tp53 <- mmrf_tp53_cpm_per_pt %>% 
+  summarise(across(everything(), ~median(.[. > 0])))
 
 mmrf_tmp_tp53_per_pt <- mmrf_tp53_cpm_per_pt %>%
   rownames_to_column("PUBLIC_ID") %>%
@@ -104,7 +107,7 @@ mmrf_tp53_per_pt <- mmrf_tmp_tp53_per_pt %>%
 mmrf_tp53_per_pt$light_chain_type <- tolower(mmrf_tp53_per_pt$light_chain_type)
 mmrf_tp53_per_pt$resp_group <- factor(mmrf_tp53_per_pt$resp_group, levels = unique(mmrf_tp53_per_pt$resp_group))
 
-write_tsv(mmrf_tp53_per_pt, "transcript_based/mmrf_tp53_per_pt.txt")
+write_tsv(mmrf_tp53_per_pt, paste0(wd, "data/mmrf/transcript_based/mmrf_tp53_per_pt.txt"))
 
 
 # ---- Fisher/chi-square significance ----
@@ -151,7 +154,7 @@ for (isoform in isoforms) {
             CI_lower = CI_lower, CI_upper = CI_upper, n_analyzed = n_analyzed, n_tot = 754)
 }
 
-write_tsv(fisher_summary, "fisher_summary.txt")
+#write_tsv(fisher_summary, "fisher_summary.txt")
 
 ### using tbl_summary
 mmrf_tp53_per_pt %>%
@@ -196,7 +199,7 @@ for (isoform in isoforms) {
     add_row(isoform = isoform, chi_p_value = p_value, stat = stat, dof = dof, n_analyzed = n_analyzed, n_tot = 754)
 }
 
-write_tsv(chi_summary, "chi_summary.txt")
+#write_tsv(chi_summary, "chi_summary.txt")
 
 ### using tbl_summary
 mmrf_tp53_per_pt %>%
