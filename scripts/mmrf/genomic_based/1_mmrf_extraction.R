@@ -42,7 +42,7 @@ weighted_CN_per_pt <- chrarm_CN_df %>%
   select(PUBLIC_ID, chr, chrarm, start, end, width, probes, weighted_mean_CN)
 weighted_CN_per_pt$chrarm <- factor(weighted_CN_per_pt$chrarm, levels = unique(weighted_CN_per_pt$chrarm))
 
-write_tsv(weighted_CN_per_pt, "WGS_weighted_CN_per_pt.txt")
+write_tsv(weighted_CN_per_pt, "genomic_based/genomic_alt/WGS_weighted_CN_per_pt.txt")
 
 
 # ---- Non-synonymous SNVs ----
@@ -62,7 +62,7 @@ tp53_dups <- tp53_nonsyn_snv_tmp_df[duplicated(tp53_nonsyn_snv_tmp_df$PUBLIC_ID)
 NS_tp53_per_pt <- rbind(tp53_nonsyn_snv_tmp_df %>% filter(!PUBLIC_ID %in% tp53_dups$PUBLIC_ID), tp53_dups)
 NS_tp53_per_pt$TP53_CHROM <- as.numeric(str_remove(NS_tp53_per_pt$TP53_CHROM, "chr"))
  
-write_tsv(NS_tp53_per_pt, "NS_TP53_per_pt.txt")
+write_tsv(NS_tp53_per_pt, "genomic_based/genomic_alt/NS_TP53_per_pt.txt")
 
 
 # ---- Translocations ----
@@ -74,7 +74,7 @@ fish_per_pt <- fread(paste0(filePath, "seqFISH/MMRF_CoMMpass_IA22_genome_tumor_o
   mutate(PUBLIC_ID = str_remove(SAMPLE, "_1_BM_CD138pos")) %>%
   select(PUBLIC_ID, ends_with("CALL"))
 
-write_tsv(fish_per_pt, "canonical_t_IgH_FISH_per_pt.txt")
+write_tsv(fish_per_pt, "genomic_based/genomic_alt/canonical_t_IgH_FISH_per_pt.txt")
 
 # NGS: 1461 obs for 315 unique pts
 violameixian.vuong2y_df <- fread(paste0(filePath, "structural_event/MMRF_CoMMpass_IA22_genome_delly.tsv")) %>% 
@@ -112,7 +112,7 @@ t_IgH_dups <- t_IgH_tmp[duplicated(t_IgH_tmp$PUBLIC_ID) | duplicated(t_IgH_tmp$P
 t_IgH_per_pt <- rbind(t_IgH_tmp %>% filter(!PUBLIC_ID %in% t_IgH_dups$PUBLIC_ID), t_IgH_dups) %>%
   rename_with(~c("IGH_CHROM", "IGH_POS", "IGH_CHR2", "IGH_POS2"), c(3,4,5,6))
 
-write_tsv(t_IgH_per_pt, "canonical_t_IgH_NGS_per_pt.txt")
+write_tsv(t_IgH_per_pt, "genomic_based/genomic_alt/canonical_t_IgH_NGS_per_pt.txt")
 
 
 # ---- Classification ----
