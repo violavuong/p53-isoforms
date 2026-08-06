@@ -1,8 +1,8 @@
-#!/usr/bin/r
+# !/usr/bin/r
 
 # file: utils.R
 # description: functions
-# last update: 22-08-2025
+# last update: 06-08-2026
 
 
 aggregateIsoforms <- function(df){
