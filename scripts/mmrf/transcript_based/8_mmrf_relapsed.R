@@ -1,10 +1,10 @@
 # !/usr/bin/r
 
 
-# file: relapse
+# file: 8_mmrf_relapsed
 # aim: checking, extracting those pts that changed line (either progression or relapse). first look for transcriptome, then clinical, then genomics
 # next feature to implement: meaning of progression
-# last update: 24-04-2026
+# last update: 06-08-2026
 
 
 library(data.table)

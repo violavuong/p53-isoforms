@@ -1,7 +1,9 @@
 #!/usr/bin/r
 
-## file: absent.R
-## last update: 08-10-2025
+
+# file: 4_mmrf_p53_FL_absence
+# aim: checking if pts with p53 FL absent are also del17p
+# last update: 06-08-2026
 
 
 library(data.table)
@@ -13,7 +15,8 @@ library(tidyverse)
 
 # ---- Main ----
 # environment setting 
-wd <- setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
+wd <- setwd("C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
+
 mmrf_tp53_per_pt <- fread(paste0(wd, "/transcript_based/mmrf_tp53_per_pt.txt")) #transcriptomic
 mmrf_genomic_per_pt <- fread(paste0(wd, "/genomic_based/mmrf_genomic_per_pt_class_10.txt")) #genomic
 

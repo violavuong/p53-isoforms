@@ -1,7 +1,10 @@
 # !/usr/bin/r
 
-## file: ratios.R
-## last update: 24-07-2026
+
+# file: 7_mmrf_ratios
+# aim: computing ratio of each isoforms wrt FL and crosstabled wrt clinical responses
+# last update: 06-08-2026
+
 
 library(crosstable)
 library(data.table)
@@ -17,10 +20,10 @@ source("C:/Users/violameixian.vuong2/Desktop/git-projects/p53-isoforms/scripts/f
 # ---- Main ----
 # setting the env
 wd <- setwd("C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
-outDir <- "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/"
+outDir <- "C:/Users/violameixian.vuong2//Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/plots/"
 
 # loading input
-mmrf_tp53_per_pt <- fread("transcript_based/mmrf_tp53_per_pt.txt")
+mmrf_tp53_per_pt <- fread(paste0(wd, "/transcript_based/mmrf_tp53_per_pt.txt"))
 
 
 # ---- Data manipulation ----
@@ -52,7 +55,7 @@ p53β_tbl <- as_flextable(crosstable(mmrf_rt_beta_FL_per_isoform %>%
                                       select(resp_sh, p53β_exp, rt_p53β_FL_exp), 
                                     by = c(rt_p53β_FL_exp, p53β_exp), label = FALSE, total = TRUE))
 
-write.xlsx(mmrf_rt_beta_FL_per_isoform, "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/ratios_240726/mmrf_rt_beta_FL_per_pt.xlsx")
+write.xlsx(mmrf_rt_beta_FL_per_isoform, paste0(wd, "../../output/ratios_240726/mmrf_rt_beta_FL_per_pt.xlsx"))
 
 
 # ---- Gamma vs FL ----
@@ -74,7 +77,7 @@ p53γ_tbl <- as_flextable(crosstable(mmrf_rt_gamma_FL_per_isoform %>%
                                       select(resp_sh, p53γ_exp, rt_p53γ_FL_exp), 
                                     by = c(rt_p53γ_FL_exp, p53γ_exp), label = FALSE, total = TRUE))
 
-write.xlsx(mmrf_rt_gamma_FL_per_isoform, "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/ratios_240726/mmrf_rt_gamma_FL_per_pt.xlsx")
+write.xlsx(mmrf_rt_gamma_FL_per_isoform, paste0(wd, "../../output/ratios_240726/mmrf_rt_gamma_FL_per_pt.xlsx"))
 
 
 # ---- Delta40 vs FL ----
@@ -96,7 +99,7 @@ p53Δ40_tbl <- as_flextable(crosstable(mmrf_rt_delta40_FL_per_isoform %>%
                                       select(resp_sh, Δ40p53α_exp, rt_Δ40_FL_exp), 
                                     by = c(rt_Δ40_FL_exp, Δ40p53α_exp), label = FALSE, total = TRUE))
 
-write.xlsx(mmrf_rt_delta40_FL_per_isoform, "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/ratios_240726/mmrf_rt_delta40_FL_per_pt.xlsx")
+write.xlsx(mmrf_rt_delta40_FL_per_isoform, paste0(wd, "../../output/ratios_240726/mmrf_rt_delta40_FL_per_pt.xlsx"))
 
 
 # ---- Delta133a vs FL ----
@@ -118,7 +121,7 @@ p53Δ133a_tbl <- as_flextable(crosstable(mmrf_rt_delta133a_FL_per_isoform %>%
                                         select(resp_sh, Δ133p53α_exp, rt_Δ133a_FL_exp), 
                                       by = c(rt_Δ133a_FL_exp, Δ133p53α_exp), label = FALSE, total = TRUE))
 
-write.xlsx(mmrf_rt_delta133a_FL_per_isoform, "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/ratios_240726/mmrf_rt_delta133a_FL_per_pt.xlsx")
+write.xlsx(mmrf_rt_delta133a_FL_per_isoform, paste0(wd, "../../output/ratios_240726/mmrf_rt_delta133a_FL_per_pt.xlsx"))
 
 
 # ---- Delta133b vs FL ----
@@ -140,13 +143,13 @@ p53Δ133b_tbl <- as_flextable(crosstable(mmrf_rt_delta133b_FL_per_isoform %>%
                                           select(resp_sh, Δ133p53β_exp, rt_Δ133b_FL_exp), 
                                         by = c(rt_Δ133b_FL_exp, Δ133p53β_exp), label = FALSE, total = TRUE))
 
-write.xlsx(mmrf_rt_delta133b_FL_per_isoform, "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/ratios_240726/mmrf_rt_delta133b_FL_per_pt.xlsx")
+write.xlsx(mmrf_rt_delta133b_FL_per_isoform, paste0(wd, "../../output/ratios_240726/mmrf_rt_delta133b_FL_per_pt.xlsx"))
 
 
 # ---- Saving all tbl ----
 save_as_html("p53β" = p53β_tbl, "p53γ" = p53γ_tbl, "Δ40p53α" = p53Δ40_tbl, 
              "Δ133p53α" = p53Δ133a_tbl, "Δ133p53β" = p53Δ133b_tbl,
-             path = "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/ratios_240726/exp_rt_frequency_tbl_240726.html")
+             path = paste0(wd, "../../output/ratios_240726/exp_rt_frequency_tbl_240726.html"))
 
 
 # ---- Plotting: exp over ratio ----

@@ -1,7 +1,9 @@
 #!/usr/bin/r
 
-## file: functional_analysis.R
-## last update: 07-10-2025
+
+# file: 6_mmrf_tetramers_probabilities
+# aim: computing tetramers probabilities 
+# last update: 06-08-2026
 
 
 library(crosstable)
@@ -12,8 +14,8 @@ library(tidyverse)
 
 # ---- Main ----
 # environment setting 
-wd <- setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
-mmrf_tp53_prob_per_pt <- fread(paste0(wd, "/transcript_based/mmrf_tp53_prob_per_pt.txt")) #transcriptomic
+wd <- setwd("C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
+mmrf_tp53_prob_per_pt <- fread(paste0(wd, "/transcript_based/tetramers/mmrf_tp53_prob_per_pt.txt")) #transcriptomic
 mmrf_genomic_per_pt <- fread(paste0(wd, "/genomic_based/mmrf_genomic_per_pt_class_10.txt")) #genomic
 
 
@@ -41,7 +43,7 @@ mmrf_Δ133_count_per_class <- mmrf_Δ133_prob_per_pt %>%
 mmrf_Δ133_count_per_class$tetramer <- factor(mmrf_Δ133_count_per_class$tetramer, levels = addNA(c("P4_FL_Δ133", "P3_FL_Δ133", "P2_FL_Δ133", "P1_FL_Δ133", "P0_FL_Δ133")))
 
 mmrf_Δ133_tbl <- crosstable(mmrf_Δ133_count_per_class, by = c(p53_FL_exp, Δ133p53α_exp), label = FALSE, total = TRUE)
-write.xlsx(mmrf_Δ133_tbl, "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/mmrf_Δ133_prob_per_class.xlsx")
+write.xlsx(mmrf_Δ133_tbl, paste0(wd, "transcript_based/tetramers/mmrf_Δ133_prob_per_class.xlsx"))
 
 
 # ---- Δ133: exploration by class ----
@@ -87,24 +89,4 @@ View(tmp %>% filter(alt!="normal"))
 
 
 crosstable(tmp, label = FALSE, total = TRUE) %>% flextable::flextable()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

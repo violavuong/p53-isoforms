@@ -1,7 +1,9 @@
 #!/usr/bin/r
 
-## file: estimation.R
-## last update: 07-10-2025
+
+# file: 5_mmrf_p53_N_term_ratios
+# aim: estimate ratios and probability of N-terminal p53 isoforms (delta40, delta133 alpha) with to FL
+# last update: 06-08-2026
 
 
 library(data.table)
@@ -24,10 +26,10 @@ roundSig <- function(x, digits = 3) {
 
 # ---- Main ----
 # setting the env
-wd <- setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
+wd <- setwd("C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
 
 # loading input
-mmrf_tp53_N_per_pt <- fread("transcript_based/mmrf_tp53_per_pt.txt") %>%
+mmrf_tp53_N_per_pt <- fread(paste0(wd, "/transcript_based/mmrf_tp53_per_pt.txt")) %>%
   select(PUBLIC_ID, p53_FL, p53_FL_exp, Δ40p53α, Δ40p53α_exp, Δ133p53α, Δ133p53α_exp)
 
 # ---- Computing ratio r and probability p ----
@@ -45,7 +47,7 @@ mmrf_tp53_prob_per_pt <- mmrf_tp53_N_per_pt %>%
          P1_FL_Δ133 = roundSig(4 * computeProb(r_Δ133_FL, 1)), 
          P0_FL_Δ133 = roundSig(computeProb(r_Δ133_FL, 0)))
 
-write_tsv(mmrf_tp53_prob_per_pt, "transcript_based/mmrf_tp53_prob_per_pt.txt")
+write_tsv(mmrf_tp53_prob_per_pt, paste0(wd, "transcript_based/tetramers/mmrf_tp53_prob_per_pt.txt"))
 
 
 # ---- Plotting: ggplot2 ----
@@ -69,7 +71,7 @@ prob_Δ40_FL_boxplot <- prob_Δ40_FL %>%
                  fun = median, geom = "errorbar", color = "black", size = 0.5, width = 0.2) +
     theme_minimal()
 
-ggsave("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/mmrf_prob_Δ40_FL.png", 
+ggsave(paste0(wd, "../../output/plots/mmrf_prob_Δ40_FL.png"), 
        prob_Δ40_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 10)
     
 #D133
@@ -92,7 +94,7 @@ prob_Δ133_FL_boxplot <- prob_Δ133_FL %>%
                  fun = median, geom = "crossbar", color = "black", size = 0.5, width = 0.2) +
     theme_minimal()
 
-ggsave("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/mmrf_prob_Δ133_FL.png", 
+ggsave(paste0(wd, "../../output/plots/mmrf_prob_Δ133_FL.png"), 
        prob_Δ133_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 10)
 
 
@@ -111,7 +113,7 @@ prob_log_Δ40_FL_boxplot <- prob_Δ40_FL %>%
     theme_minimal() +
     theme(legend.position = "bottom")
 
-ggsave("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/mmrf_norm_prob_log_Δ40_FL.png", 
+ggsave(paste0(wd, "../../output/plots/mmrf_norm_prob_log_Δ40_FL.png"), 
        prob_log_Δ40_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 20)
 
 #D133
@@ -129,7 +131,7 @@ prob_log_Δ133_FL_boxplot <- prob_Δ133_FL %>%
     theme(legend.position = "bottom")
 
 
-ggsave("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/output/visualization/mmrf_norm_prob_log_Δ133_FL.png", 
+ggsave(paste0(wd, "../../output/plots/mmrf_norm_prob_log_Δ133_FL.png"), 
        prob_log_Δ133_FL_boxplot, bg = "white", dpi = 400, height = 10, width = 20)
 
 ### ---- WB data ----

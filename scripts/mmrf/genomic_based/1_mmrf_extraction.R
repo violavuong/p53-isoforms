@@ -1,8 +1,8 @@
 # !/usr/bin/r
 
-# file: manipulation.R
+# file: 1_mmrf_extraction
 # description: data extraction and handling of compelling CoMMpass genomic data
-# last update: 08-07-2025
+# last update: 06-08-2026
 
 library(data.table)
 library(GenomicRanges)
@@ -10,14 +10,14 @@ library(plyranges)
 library(rlist)
 library(tidyverse)
 
-source("C:/Users/Dell/Desktop/git_projects/UMA/UMA_lib/fun/Popeye2.R")
-source("C:/Users/Dell/Desktop/git_projects/TP53/scripts/fun/utils.R")
+source("C:/Users/violameixian.vuong2/Desktop/git_projects/UMA/UMA_lib/fun/Popeye2.R")
+source("C:/Users/violameixian.vuong2/Desktop/git_projects/TP53/scripts/fun/utils.R")
 
 # ---- Main ----
 # working directories
-wd <- setwd("C:/Users/Dell/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/genomic_based/")
-filePath <- "C:/Users/Dell/Alma Mater Studiorum Università di Bologna/Bioinformatics Seràgnoli - IA22/"
-libDir <- "C:/Users/Dell/Desktop/git_projects/UMA/UMA_lib/"
+wd <- setwd("C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/genomic_based/")
+filePath <- "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/Bioinformatics Seràgnoli - IA22/"
+libDir <- "C:/Users/violameixian.vuong2/Desktop/git_projects/UMA/UMA_lib/"
 
 
 # ---- GATK genome copy number ----
@@ -77,7 +77,7 @@ fish_per_pt <- fread(paste0(filePath, "seqFISH/MMRF_CoMMpass_IA22_genome_tumor_o
 write_tsv(fish_per_pt, "canonical_t_IgH_FISH_per_pt.txt")
 
 # NGS: 1461 obs for 315 unique pts
-delly_df <- fread(paste0(filePath, "structural_event/MMRF_CoMMpass_IA22_genome_delly.tsv")) %>% 
+violameixian.vuong2y_df <- fread(paste0(filePath, "structural_event/MMRF_CoMMpass_IA22_genome_delly.tsv")) %>% 
   filter(str_detect(SAMPLE, "1_BM_CD138pos"), SVTYPE=="TRA", (CHROM=="chr14" & CHR2 %in% chr_partners) | (CHROM %in% chr_partners & CHR2=="chr14")) %>%
   mutate(PUBLIC_ID = str_remove(SAMPLE, "_1_BM_CD138pos"), 
          CHROM = as.numeric(str_remove(CHROM, "chr")), 

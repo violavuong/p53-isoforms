@@ -1,9 +1,9 @@
 # !/usr/bin/r
 
 
-# file: clinicalUnit
-# aim: check lab-clinical data redundancy across releases IA22 and IA24 
-# last update: 23-06-2026
+# file: 1_checking_clinical_units
+# aim: check lab-clinical data redundancy across releases IA22 and IA24 to figure out units
+# last update: 06-08-2026
 
 
 library(data.table)

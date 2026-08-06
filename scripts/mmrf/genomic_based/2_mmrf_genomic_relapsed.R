@@ -1,8 +1,8 @@
 # !/usr/bin/r
 
-# file: relapse
+# file: 2_mmrf_genomic_relapsed
 # aim: extract genomic data for relapse pts
-# last update: 27-04-2026
+# last update: 06-08-2026
 
 
 library(data.table)
