@@ -2,12 +2,12 @@
 
 # file: 1_mmrf_normalization
 # aim: investigating mmrf transcript-based data, normalizing and merging clinical data
-# last update: 06-08-2026
+# last update: 11-08-2026
 
 # installing RNA-seq libraries
 if (!require("BiocManager", quietly = TRUE)){
   install.packages("BiocManager")}
-BiocManager::install(c("edgeR", "Glimma", "limma"))
+BiocManager::install(c("edgeR", "Glimma"))
 
 
 # ---- Main ----
@@ -19,11 +19,13 @@ library(SummarizedExperiment)
 library(tidyverse)
 
 
-pathDir <- "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/Bioinformatics Seràgnoli - IA22/"
+#pathDir <- "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/Bioinformatics Seràgnoli - IA22/"
+pathDir <- "C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/Bioinformatics Seràgnoli - IA24/"
 wd <- setwd("C:/Users/violameixian.vuong2/Alma Mater Studiorum Università di Bologna/PROJECT_TP53-isoforms - Documents/data/mmrf/")
 
 # mmrf input data - normalized transcript-per-million
-mmrf_tpm <- fread(paste0(pathDir, "expression_estimates_transcript_based/MMRF_CoMMpass_IA22_salmon_transcriptUnstrandedIgFiltered_tpm.tsv"))
+#mmrf_tpm <- fread(paste0(pathDir, "expression_estimates_transcript_based/MMRF_CoMMpass_IA22_salmon_transcriptUnstrandedIgFiltered_tpm.tsv"))
+mmrf_tpm <- fread(paste0(pathDir, "transcript_expression/MMRF_CoMMpass_IA24_salmon_transcriptUnstrandedIgFiltered_tpm.tsv"))
 
 # mmrf clinical data
 ## md_pt: pts general data
