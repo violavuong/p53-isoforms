@@ -43,7 +43,7 @@ mmrf_gene_exp_first_line <- mmrf_gene_expression %>%
 
 
 # ---- adding hugo nomenclature ----
-# hg19 ensg-hugo dictionary
+# hg38 ensg-hugo dictionary
 ensg_hugo_dict_hg38 <- select(EnsDb.Hsapiens.v86, keys = mmrf_gene_exp_first_line$ENSG_ID, keytype = "GENEID", columns = c("GENEID", "SYMBOL")) # 56871 entries
 
 # merge
